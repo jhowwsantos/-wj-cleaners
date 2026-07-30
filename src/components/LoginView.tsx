@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logoImg from '../assets/logo.png';
 import { Sparkles, Mail, ArrowRight, AlertCircle, KeyRound } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -34,10 +35,12 @@ export const LoginView: React.FC = () => {
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <img
-            src="/logo.png"
+            src={logoImg}
             alt="W & J Cleaners Logo"
             className="w-16 h-16 object-contain rounded-2xl mx-auto shadow-lg shadow-blue-500/20 bg-white/5 p-1 border border-slate-700/50"
-            referrerPolicy="no-referrer"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = '/logo.png';
+            }}
           />
           <h1 className="text-2xl font-black text-white tracking-tight flex items-center justify-center gap-2">
             W & J Cleaners <span className="text-xs bg-blue-900/80 text-blue-300 font-bold px-2 py-0.5 rounded-md border border-blue-700">UK</span>

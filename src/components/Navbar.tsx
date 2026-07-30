@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logoImg from '../assets/logo.png';
 import {
   Sparkles,
   Building2,
@@ -55,10 +56,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 
             <div className="flex items-center gap-2 shrink-0 min-w-0">
               <img
-                src="/logo.png"
+                src={currentCompany?.logoUrl && currentCompany.logoUrl !== '/logo.png' ? currentCompany.logoUrl : logoImg}
                 alt="W & J Cleaners"
                 className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl shadow-md shadow-blue-500/10 shrink-0"
-                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = logoImg;
+                }}
               />
               <div className="shrink-0 min-w-0">
                 <h1 className="font-extrabold text-xs sm:text-lg leading-tight text-slate-900 dark:text-white tracking-tight flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">

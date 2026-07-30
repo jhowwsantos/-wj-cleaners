@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import logoImg from '../assets/logo.png';
 import {
   LayoutDashboard,
   Calendar,
@@ -106,7 +107,14 @@ const SidebarComponent: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {/* UK Cleaners Badge Footer */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-center text-[11px] text-slate-400 dark:text-slate-500">
           <div className="flex items-center justify-center gap-1.5 mb-1">
-            <img src="/logo.png" alt="W & J Logo" className="w-5 h-5 object-contain" referrerPolicy="no-referrer" />
+            <img
+              src={logoImg}
+              alt="W & J Logo"
+              className="w-5 h-5 object-contain"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = '/logo.png';
+              }}
+            />
             <span className="font-bold text-xs text-slate-700 dark:text-slate-300">W & J Cleaners</span>
           </div>
           <div className="text-[10px] text-slate-400">Clean Spaces, Better Places</div>

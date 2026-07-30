@@ -1,4 +1,5 @@
 import React from 'react';
+import logoImg from '../assets/logo.png';
 import { X, Printer, MessageCircle, FileText, CheckCircle2 } from 'lucide-react';
 import { CleaningJob } from '../types';
 import { useApp } from '../context/AppContext';
@@ -56,10 +57,12 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, job
           {/* Company Branding */}
           <div className="text-center pb-4 border-b border-slate-100 dark:border-slate-700">
             <img
-              src={currentCompany.logoUrl || '/logo.png'}
+              src={currentCompany.logoUrl && currentCompany.logoUrl !== '/logo.png' ? currentCompany.logoUrl : logoImg}
               alt={currentCompany.name}
               className="w-16 h-16 object-contain mx-auto mb-2 rounded-xl shadow-sm"
-              referrerPolicy="no-referrer"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = logoImg;
+              }}
             />
             <h2 className="text-2xl font-black text-blue-900 dark:text-blue-400 tracking-tight">
               {currentCompany.name}

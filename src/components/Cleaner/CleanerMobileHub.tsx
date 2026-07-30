@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logoImg from '../../assets/logo.png';
 import {
   Smartphone,
   MapPin,
@@ -61,10 +62,12 @@ export const CleanerMobileHub: React.FC = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2.5">
             <img
-              src="/logo.png"
+              src={logoImg}
               alt="W & J Cleaners"
               className="w-7 h-7 object-contain rounded-lg bg-white/10 p-0.5 border border-white/20"
-              referrerPolicy="no-referrer"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = '/logo.png';
+              }}
             />
             <h2 className="font-extrabold text-lg">{getTranslation(language, 'cleanerHubTitle')}</h2>
           </div>

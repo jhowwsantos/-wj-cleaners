@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "companies": {
+      "title": "Companies",
+      "description": "Multi-tenant company configurations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "address": { "type": "string" },
+        "postcode": { "type": "string" },
+        "city": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "ownerName": { "type": "string" },
+        "currency": { "type": "string" },
+        "subscriptionPlan": { "type": "string" },
+        "subscriptionStatus": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Cleaning service clients CRM",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "postcode": { "type": "string" },
+        "city": { "type": "string" },
+        "frequency": { "type": "string" },
+        "preferredDayOfWeek": { "type": "number" },
+        "preferredTime": { "type": "string" },
+        "defaultPrice": { "type": "number" },
+        "estimatedDuration": { "type": "number" },
+        "keyDetails": { "type": "string" },
+        "alarmCode": { "type": "string" },
+        "hasPets": { "type": "boolean" },
+        "petNotes": { "type": "string" },
+        "notes": { "type": "string" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "companyId", "name", "address", "postcode"]
+    },
+    "jobs": {
+      "title": "Cleaning Jobs",
+      "description": "Scheduled and executed cleaning jobs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "clientName": { "type": "string" },
+        "address": { "type": "string" },
+        "postcode": { "type": "string" },
+        "city": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "cleanerId": { "type": "string" },
+        "cleanerName": { "type": "string" },
+        "date": { "type": "string" },
+        "startTime": { "type": "string" },
+        "estimatedDuration": { "type": "number" },
+        "price": { "type": "number" },
+        "status": { "type": "string" },
+        "paymentStatus": { "type": "string" },
+        "notes": { "type": "string" },
+        "keyDetails": { "type": "string" },
+        "alarmCode": { "type": "string" },
+        "hasPets": { "type": "boolean" },
+        "petNotes": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "clientSignature": { "type": "string" }
+      },
+      "required": ["id", "companyId", "date", "clientName", "price"]
+    },
+    "financial_transactions": {
+      "title": "Financial Transactions",
+      "description": "Income and expense tracking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "type": { "type": "string" },
+        "category": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string" },
+        "description": { "type": "string" },
+        "clientId": { "type": "string" },
+        "cleanerId": { "type": "string" }
+      },
+      "required": ["id", "companyId", "type", "amount", "date"]
+    }
+  }
+}

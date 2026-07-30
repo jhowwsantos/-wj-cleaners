@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="15%" stop-color="#e8f3ff"/>
+      <stop offset="55%" stop-color="#0284c7"/>
+      <stop offset="85%" stop-color="#033678"/>
+      <stop offset="100%" stop-color="#011b40"/>
+    </linearGradient>
+
+    <linearGradient id="badgeBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#f0f7ff"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+
+    <linearGradient id="blueTextGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f4c81"/>
+      <stop offset="40%" stop-color="#0256b6"/>
+      <stop offset="100%" stop-color="#00357a"/>
+    </linearGradient>
+
+    <linearGradient id="roofGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0066d6"/>
+      <stop offset="100%" stop-color="#003b87"/>
+    </linearGradient>
+
+    <linearGradient id="swooshGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="50%" stop-color="#0052cc"/>
+      <stop offset="100%" stop-color="#022859"/>
+    </linearGradient>
+
+    <!-- Drop Shadows -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#001a40" flood-opacity="0.25"/>
+    </filter>
+
+    <filter id="textGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#ffffff" flood-opacity="0.8"/>
+    </filter>
+  </defs>
+
+  <style>
+    .serif-title {
+      font-family: 'Times New Roman', Georgia, 'Playfair Display', serif;
+      font-weight: 900;
+    }
+    .sans-bold {
+      font-family: 'Montserrat', 'Arial Black', -apple-system, sans-serif;
+      font-weight: 900;
+    }
+    .sans-sub {
+      font-family: 'Montserrat', 'Arial', -apple-system, sans-serif;
+      font-weight: 700;
+    }
+  </style>
+
+  <!-- Base Badge Container (Rounded Square) -->
+  <rect x="20" y="20" width="960" height="960" rx="140" ry="140" fill="url(#bgGrad)" stroke="#ffffff" stroke-width="8" filter="url(#shadow)"/>
+  <rect x="28" y="28" width="944" height="944" rx="132" ry="132" fill="none" stroke="#e0f2fe" stroke-width="3" opacity="0.6"/>
+
+  <!-- Inner Soft Light Disk / Oval Background for Initials -->
+  <ellipse cx="500" cy="420" rx="410" ry="320" fill="url(#badgeBg)" filter="url(#shadow)"/>
+
+  <!-- Sweeping Metallic Outer Blue Arc -->
+  <path d="M 160 550 C 70 300, 300 110, 520 80 C 720 50, 920 180, 930 420 C 940 650, 720 810, 500 810 C 320 810, 180 720, 130 630 C 180 700, 320 770, 500 770 C 700 770, 880 630, 870 420 C 860 210, 690 90, 510 110 C 330 130, 140 300, 200 530 Z" fill="url(#swooshGrad)" filter="url(#shadow)"/>
+  
+  <path d="M 180 520 C 110 320, 310 140, 510 115 C 700 90, 870 210, 875 410 C 880 580, 740 730, 550 755 C 410 770, 260 720, 180 600 C 230 670, 370 730, 520 725 C 700 720, 830 580, 825 410 C 820 230, 670 125, 500 145 C 320 165, 170 320, 220 520 Z" fill="#ffffff" opacity="0.85"/>
+
+  <!-- House Roof & Chimney & Windows -->
+  <g id="roof-group" transform="translate(0, -10)">
+    <!-- House Roof -->
+    <path d="M 200 280 L 500 80 L 800 280 L 730 280 L 500 130 L 270 280 Z" fill="url(#roofGrad)" filter="url(#shadow)"/>
+    <path d="M 215 270 L 500 80 L 785 270" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Chimney -->
+    <rect x="700" y="150" width="45" height="70" fill="url(#roofGrad)" rx="4"/>
+    <rect x="690" y="145" width="65" height="15" fill="#00357a" rx="4"/>
+
+    <!-- 4-Pane Window Grid -->
+    <g transform="translate(465, 195)">
+      <rect x="0" y="0" width="32" height="32" rx="4" fill="#004ba0" stroke="#ffffff" stroke-width="3"/>
+      <rect x="38" y="0" width="32" height="32" rx="4" fill="#004ba0" stroke="#ffffff" stroke-width="3"/>
+      <rect x="0" y="38" width="32" height="32" rx="4" fill="#004ba0" stroke="#ffffff" stroke-width="3"/>
+      <rect x="38" y="38" width="32" height="32" rx="4" fill="#004ba0" stroke="#ffffff" stroke-width="3"/>
+    </g>
+  </g>
+
+  <!-- Central "W & J" Typography -->
+  <!-- White outline glow for readability -->
+  <g filter="url(#textGlow)">
+    <!-- W -->
+    <text x="350" y="580" text-anchor="middle" font-size="340" fill="url(#blueTextGrad)" stroke="#ffffff" stroke-width="16" stroke-linejoin="round" class="serif-title">W</text>
+    <text x="350" y="580" text-anchor="middle" font-size="340" fill="url(#blueTextGrad)" class="serif-title">W</text>
+
+    <!-- & -->
+    <text x="590" y="520" text-anchor="middle" font-size="190" fill="url(#blueTextGrad)" stroke="#ffffff" stroke-width="12" stroke-linejoin="round" class="serif-title">&amp;</text>
+    <text x="590" y="520" text-anchor="middle" font-size="190" fill="url(#blueTextGrad)" class="serif-title">&amp;</text>
+
+    <!-- J -->
+    <text x="730" y="590" text-anchor="middle" font-size="330" fill="url(#blueTextGrad)" stroke="#ffffff" stroke-width="16" stroke-linejoin="round" class="serif-title">J</text>
+    <text x="730" y="590" text-anchor="middle" font-size="330" fill="url(#blueTextGrad)" class="serif-title">J</text>
+  </g>
+
+  <!-- Broom Illustration (Bottom Right) -->
+  <g id="broom" transform="translate(600, 390) rotate(15)" filter="url(#shadow)">
+    <!-- Broom Handle -->
+    <rect x="190" y="-120" width="22" height="380" rx="11" fill="url(#roofGrad)" stroke="#ffffff" stroke-width="4"/>
+    <!-- Handle Cap -->
+    <ellipse cx="201" cy="-115" rx="15" ry="8" fill="#ffffff"/>
+
+    <!-- Broom Head Holder -->
+    <path d="M 160 230 C 160 210, 240 210, 240 230 L 255 270 C 255 280, 145 280, 145 270 Z" fill="#00357a" stroke="#ffffff" stroke-width="4"/>
+    
+    <!-- Bristles Fan -->
+    <path d="M 145 275 Q 70 360, 40 380 Q 200 375, 330 360 Q 280 320, 255 275 Z" fill="#ffffff" stroke="#00357a" stroke-width="5"/>
+    <!-- Bristle Lines -->
+    <path d="M 165 278 Q 110 345, 80 372 M 190 278 Q 170 345, 160 375 M 215 278 Q 230 345, 240 370 M 240 278 Q 275 335, 295 362" fill="none" stroke="#0052cc" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+  </g>
+
+  <!-- Sparkle Stars (4-Point Stars ✨) -->
+  <!-- Top Right Roof Sparkle 1 -->
+  <g transform="translate(700, 110)">
+    <path d="M 0 -35 Q 0 0, 35 0 Q 0 0, 0 35 Q 0 0, -35 0 Q 0 0, 0 -35 Z" fill="#ffffff" filter="url(#softGlow)"/>
+    <path d="M 0 -20 Q 0 0, 20 0 Q 0 0, 0 20 Q 0 0, -20 0 Q 0 0, 0 -20 Z" fill="#38bdf8"/>
+  </g>
+
+  <!-- Top Right Roof Sparkle 2 (Smaller) -->
+  <g transform="translate(810, 190) scale(0.65)">
+    <path d="M 0 -35 Q 0 0, 35 0 Q 0 0, 0 35 Q 0 0, -35 0 Q 0 0, 0 -35 Z" fill="#ffffff" filter="url(#softGlow)"/>
+  </g>
+
+  <!-- Broom Sparkle 1 -->
+  <g transform="translate(900, 570) scale(0.85)">
+    <path d="M 0 -35 Q 0 0, 35 0 Q 0 0, 0 35 Q 0 0, -35 0 Q 0 0, 0 -35 Z" fill="#ffffff" filter="url(#softGlow)"/>
+  </g>
+
+  <!-- Broom Sparkle 2 -->
+  <g transform="translate(870, 640) scale(0.5)">
+    <path d="M 0 -35 Q 0 0, 35 0 Q 0 0, 0 35 Q 0 0, -35 0 Q 0 0, 0 -35 Z" fill="#ffffff"/>
+  </g>
+
+  <!-- Bottom Text Banner Area -->
+  <g id="bottom-text" filter="url(#textGlow)">
+    <!-- "CLEANERS" -->
+    <text x="500" y="835" text-anchor="middle" font-size="92" fill="#ffffff" letter-spacing="14" class="sans-bold">CLEANERS</text>
+    
+    <!-- Separator Line with Central Diamond Sparkle -->
+    <path d="M 180 870 L 460 870 M 540 870 L 820 870" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.85"/>
+    <!-- Central Star Diamond -->
+    <polygon points="500,860 508,870 500,880 492,870" fill="#ffffff"/>
+    
+    <!-- Slogan "CLEAN SPACES, BETTER PLACES" -->
+    <text x="500" y="915" text-anchor="middle" font-size="34" fill="#ffffff" letter-spacing="10" class="sans-sub">CLEAN SPACES, BETTER PLACES</text>
+  </g>
+</svg>

@@ -55,17 +55,14 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 
             <div className="flex items-center gap-2 shrink-0 min-w-0">
               <img
-                src={currentCompany?.logoUrl || '/logo.png'}
+                src="/logo.png"
                 alt="W & J Cleaners"
-                className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl shadow-md shadow-blue-500/10 shrink-0 bg-white/5"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/logo.png';
-                }}
+                className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl shadow-md shadow-blue-500/10 shrink-0"
                 referrerPolicy="no-referrer"
               />
               <div className="shrink-0 min-w-0">
-                <h1 className="font-extrabold text-xs sm:text-lg leading-tight text-slate-900 dark:text-white tracking-tight flex items-center gap-1 sm:gap-1.5 flex-wrap">
-                  <span className="truncate max-w-[95px] xs:max-w-[130px] sm:max-w-none">W & J Cleaners</span>
+                <h1 className="font-extrabold text-xs sm:text-lg leading-tight text-slate-900 dark:text-white tracking-tight flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+                  <span>W & J Cleaners</span>
                   <span className="text-[9px] sm:text-[10px] font-bold uppercase bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 px-1.5 sm:px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-800 shrink-0">
                     UK
                   </span>

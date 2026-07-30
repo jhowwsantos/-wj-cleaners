@@ -112,7 +112,7 @@ const SidebarComponent: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               alt="W & J Logo"
               className="w-5 h-5 object-contain"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = '/logo.png';
+                (e.currentTarget as HTMLImageElement).src = logoImg;
               }}
             />
             <span className="font-bold text-xs text-slate-700 dark:text-slate-300">W & J Cleaners</span>

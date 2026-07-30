@@ -39,7 +39,7 @@ export const LoginView: React.FC = () => {
             alt="W & J Cleaners Logo"
             className="w-16 h-16 object-contain rounded-2xl mx-auto shadow-lg shadow-blue-500/20 bg-white/5 p-1 border border-slate-700/50"
             onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = '/logo.png';
+              (e.currentTarget as HTMLImageElement).src = logoImg;
             }}
           />
           <h1 className="text-2xl font-black text-white tracking-tight flex items-center justify-center gap-2">

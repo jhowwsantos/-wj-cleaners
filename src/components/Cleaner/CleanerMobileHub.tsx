@@ -66,7 +66,7 @@ export const CleanerMobileHub: React.FC = () => {
               alt="W & J Cleaners"
               className="w-7 h-7 object-contain rounded-lg bg-white/10 p-0.5 border border-white/20"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = '/logo.png';
+                (e.currentTarget as HTMLImageElement).src = logoImg;
               }}
             />
             <h2 className="font-extrabold text-lg">{getTranslation(language, 'cleanerHubTitle')}</h2>

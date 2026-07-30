@@ -13,17 +13,19 @@ import {
 import { useApp } from '../../context/AppContext';
 import { CleaningJob } from '../../types';
 import { getTranslation } from '../../utils/i18n';
+import { getCombinedJobsForDate } from '../../utils/scheduleGenerator';
 import { SignatureModal } from '../SignatureModal';
 import { ReceiptModal } from '../ReceiptModal';
 
 export const CleanerMobileHub: React.FC = () => {
-  const { jobs, currentUser, updateJobStatus, addPhotoToJob, saveClientSignature, language } = useApp();
+  const { jobs, clients, currentCompany, currentUser, updateJobStatus, addPhotoToJob, saveClientSignature, language } = useApp();
 
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // Filter jobs for current logged in cleaner or assigned jobs
-  const myJobs = jobs.filter(
-    (j) => j.date === todayStr && (j.cleanerId === currentUser.id || !j.cleanerId)
+  // Filter jobs for current logged in cleaner or assigned jobs using combined generator
+  const todayJobs = getCombinedJobsForDate(jobs, clients, todayStr, currentCompany.id);
+  const myJobs = todayJobs.filter(
+    (j) => (j.cleanerId === currentUser.id || !j.cleanerId)
   );
 
   const [selectedJob, setSelectedJob] = useState<CleaningJob | null>(myJobs[0] || jobs[0]);

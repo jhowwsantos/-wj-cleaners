@@ -61,10 +61,35 @@ export function getCombinedJobsForDate(
   targetDateStr: string,
   companyId?: string
 ): CleaningJob[] {
+  const clientMap = new Map<string, Client>();
+  clients.forEach((c) => clientMap.set(c.id, c));
+
   // Get all explicit jobs for this date that are NOT deleted
-  const jobsForDate = explicitJobs.filter(
+  const rawJobsForDate = explicitJobs.filter(
     (j) => j.date === targetDateStr && !(j as any).isDeleted && (j.status as string) !== 'DELETED'
   );
+
+  // Always enrich explicit jobs with official client details if client exists
+  const jobsForDate = rawJobsForDate.map((j) => {
+    if (j.clientId && clientMap.has(j.clientId)) {
+      const client = clientMap.get(j.clientId)!;
+      return {
+        ...j,
+        clientName: client.name || j.clientName,
+        address: client.address || j.address,
+        postcode: client.postcode || j.postcode,
+        city: client.city || j.city,
+        phone: client.phone || j.phone,
+        whatsapp: client.whatsapp || j.whatsapp,
+        keyDetails: client.keyDetails ?? j.keyDetails,
+        alarmCode: client.alarmCode ?? j.alarmCode,
+        hasPets: client.hasPets ?? j.hasPets,
+        petNotes: client.petNotes ?? j.petNotes,
+      };
+    }
+    return j;
+  });
+
   const existingClientIds = new Set(
     explicitJobs.filter((j) => j.date === targetDateStr).map((j) => j.clientId)
   );

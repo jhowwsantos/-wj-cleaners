@@ -680,12 +680,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (Object.keys(jobUpdates).length > 0) {
       setJobs((prevJobs) =>
         prevJobs.map((j) => {
-          if (
-            j.clientId === id &&
-            j.status !== 'COMPLETED' &&
-            j.status !== 'CANCELLED' &&
-            !j.id.startsWith('virt_')
-          ) {
+          if (j.clientId === id && !j.id.startsWith('virt_')) {
             const updatedJob = { ...j, ...jobUpdates };
             setDoc(doc(db, 'jobs', j.id), sanitizeFirestoreData(jobUpdates), { merge: true }).catch((err) => {
               console.warn('Error syncing cascaded job update to Firestore:', err);

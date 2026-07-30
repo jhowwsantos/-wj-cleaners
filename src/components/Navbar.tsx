@@ -42,28 +42,28 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
   return (
     <>
       <header className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4 overflow-hidden">
           {/* Left: Mobile Toggle & Brand Logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
             <button
               onClick={onToggleSidebar}
-              className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="lg:hidden p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
               aria-label="Toggle menu"
             >
               <Menu className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 shrink-0 min-w-0">
               <img
                 src="/logo.png"
                 alt="W & J Cleaners"
-                className="w-10 h-10 object-contain rounded-xl shadow-md shadow-blue-500/10"
+                className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl shadow-md shadow-blue-500/10 shrink-0"
                 referrerPolicy="no-referrer"
               />
-              <div>
-                <h1 className="font-extrabold text-lg leading-tight text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5">
-                  W & J Cleaners
-                  <span className="text-[10px] font-bold uppercase bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
+              <div className="shrink-0 min-w-0">
+                <h1 className="font-extrabold text-xs sm:text-lg leading-tight text-slate-900 dark:text-white tracking-tight flex items-center gap-1 sm:gap-1.5">
+                  <span className="truncate max-w-[110px] xs:max-w-none">W & J Cleaners</span>
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 px-1.5 sm:px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-800 shrink-0">
                     UK
                   </span>
                 </h1>
@@ -75,7 +75,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
           </div>
 
           {/* Right Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* SaaS Branch Switcher Button (Owner Only) */}
             {currentUser.role === 'OWNER' && (
               <button
@@ -88,16 +88,16 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
             )}
 
             {/* User Profile Badge */}
-            <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold bg-blue-50/80 dark:bg-blue-950/60 text-blue-900 dark:text-blue-200 rounded-xl border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold bg-blue-50/80 dark:bg-blue-950/60 text-blue-900 dark:text-blue-200 rounded-xl border border-blue-200 dark:border-blue-800 shrink-0">
               {currentUser.role === 'OWNER' ? (
-                <Shield className="w-3.5 h-3.5 text-amber-500" />
+                <Shield className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               ) : currentUser.role === 'ADMINISTRATOR' ? (
-                <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+                <UserCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
               ) : (
-                <User className="w-3.5 h-3.5 text-emerald-500" />
+                <User className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
               )}
               <span className="hidden md:inline font-extrabold">{currentUser.name}</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded font-black uppercase bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+              <span className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded font-black uppercase bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 shrink-0">
                 {currentUser.role}
               </span>
             </div>

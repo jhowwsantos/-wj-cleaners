@@ -59,8 +59,13 @@ export const CleanerMobileHub: React.FC = () => {
       {/* Mobile Top Header Banner */}
       <div className="bg-gradient-to-r from-blue-900 to-indigo-900 p-5 rounded-3xl text-white shadow-lg space-y-2">
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Smartphone className="w-5 h-5 text-blue-400" />
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/logo.png"
+              alt="W & J Cleaners"
+              className="w-7 h-7 object-contain rounded-lg bg-white/10 p-0.5 border border-white/20"
+              referrerPolicy="no-referrer"
+            />
             <h2 className="font-extrabold text-lg">{getTranslation(language, 'cleanerHubTitle')}</h2>
           </div>
           <span className="text-[10px] font-bold uppercase bg-blue-500/30 text-blue-200 border border-blue-400/30 px-2.5 py-0.5 rounded-full">

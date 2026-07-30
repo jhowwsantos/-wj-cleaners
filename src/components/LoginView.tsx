@@ -33,9 +33,12 @@ export const LoginView: React.FC = () => {
       <div className="max-w-md w-full bg-slate-800/90 backdrop-blur-xl rounded-3xl border border-slate-700/80 p-8 shadow-2xl relative z-10 space-y-6 animate-in fade-in zoom-in-95 duration-200">
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white mx-auto shadow-lg shadow-blue-500/30">
-            <Sparkles className="w-8 h-8" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="W & J Cleaners Logo"
+            className="w-16 h-16 object-contain rounded-2xl mx-auto shadow-lg shadow-blue-500/20 bg-white/5 p-1 border border-slate-700/50"
+            referrerPolicy="no-referrer"
+          />
           <h1 className="text-2xl font-black text-white tracking-tight flex items-center justify-center gap-2">
             W & J Cleaners <span className="text-xs bg-blue-900/80 text-blue-300 font-bold px-2 py-0.5 rounded-md border border-blue-700">UK</span>
           </h1>

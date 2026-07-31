@@ -56,7 +56,19 @@ const SidebarComponent: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         }`}
       >
         <div className="p-4 flex items-center justify-between lg:hidden border-b border-slate-100 dark:border-slate-800">
-          <span className="font-bold text-xs text-slate-500 uppercase tracking-wider">Navigation Menu</span>
+          <div className="flex items-center gap-2">
+            <img
+              src={logoImg || '/logo.png'}
+              alt="W & J Logo"
+              className="w-6 h-6 aspect-square object-contain shrink-0"
+              onError={(e) => {
+                const target = e.currentTarget as HTMLImageElement;
+                target.onerror = null;
+                target.src = '/logo.png';
+              }}
+            />
+            <span className="font-bold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wider">W & J Cleaners</span>
+          </div>
           <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600">
             <X className="w-5 h-5" />
           </button>

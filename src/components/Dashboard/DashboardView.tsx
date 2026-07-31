@@ -27,6 +27,7 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import { useApp } from '../../context/AppContext';
 import { getTranslation } from '../../utils/i18n';
+import logoImg from '../../assets/logo.png';
 import { CleaningJob } from '../../types';
 import { getCombinedJobsForDate } from '../../utils/scheduleGenerator';
 import { CleanerMobileHub } from '../Cleaner/CleanerMobileHub';
@@ -143,17 +144,29 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({
       <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 rounded-3xl p-6 text-white shadow-xl shadow-blue-900/10 relative overflow-hidden border border-blue-800/50">
         <Sparkles className="w-48 h-48 absolute -right-10 -bottom-10 opacity-10 pointer-events-none" />
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/20 border border-blue-400/30 backdrop-blur-md rounded-full text-xs font-bold text-blue-200 mb-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              UK Cleaning Business SaaS Engine
+          <div className="flex items-center gap-4">
+            <img
+              src={logoImg || '/logo.png'}
+              alt="W & J Cleaners"
+              className="w-14 h-14 sm:w-16 sm:h-16 aspect-square object-contain shrink-0 bg-white/10 p-1 rounded-2xl border border-white/10 shadow-md"
+              onError={(e) => {
+                const target = e.currentTarget as HTMLImageElement;
+                target.onerror = null;
+                target.src = '/logo.png';
+              }}
+            />
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/20 border border-blue-400/30 backdrop-blur-md rounded-full text-xs font-bold text-blue-200 mb-0.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                UK Cleaning Business SaaS Engine
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2">
+                {getTranslation(language, 'welcomeBack')}, {firstName} 👋
+              </h2>
+              <p className="text-sm text-blue-100 font-medium">
+                {todayJobs.length} {getTranslation(language, 'scheduledToday')}.
+              </p>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2">
-              {getTranslation(language, 'welcomeBack')}, {firstName} 👋
-            </h2>
-            <p className="text-sm text-blue-100 font-medium">
-              {todayJobs.length} {getTranslation(language, 'scheduledToday')}.
-            </p>
           </div>
 
           {/* Action Buttons */}

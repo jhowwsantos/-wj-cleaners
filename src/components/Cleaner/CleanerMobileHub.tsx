@@ -64,7 +64,7 @@ export const CleanerMobileHub: React.FC = () => {
             <img
               src={logoImg || '/logo.png'}
               alt="W & J Cleaners"
-              className="w-8 h-8 object-contain shrink-0"
+              className="w-8 h-8 aspect-square object-contain shrink-0"
               onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
                 target.onerror = null;

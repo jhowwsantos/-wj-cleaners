@@ -110,7 +110,7 @@ const SidebarComponent: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <img
               src={logoImg || '/logo.png'}
               alt="W & J Logo"
-              className="w-6 h-6 object-contain shrink-0"
+              className="w-6 h-6 aspect-square object-contain shrink-0"
               onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
                 target.onerror = null;

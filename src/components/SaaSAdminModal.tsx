@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Building2, Plus, Check, Sparkles, CreditCard } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslation } from '../utils/i18n';
+import logoImg from '../assets/logo.png';
 
 interface SaaSAdminModalProps {
   isOpen: boolean;
@@ -92,15 +93,27 @@ export const SaaSAdminModal: React.FC<SaaSAdminModalProps> = ({ isOpen, onClose 
           <div className="bg-gradient-to-r from-blue-900 to-indigo-800 p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
             <Sparkles className="w-24 h-24 absolute -right-4 -bottom-4 opacity-15 pointer-events-none" />
             <div className="flex justify-between items-start">
-              <div>
-                <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-500/30 text-blue-200 border border-blue-400/30 mb-2">
-                  {getTranslation(language, 'multiTenantEngine')}
-                </span>
-                <h4 className="text-xl font-bold">{currentCompany.name}</h4>
-                <p className="text-xs text-blue-200 mt-1">
-                  {getTranslation(language, 'planLabel')} <span className="font-bold text-white">{currentCompany.subscriptionPlan}</span> • {getTranslation(language, 'statusLabel')}{' '}
-                  <span className="font-bold text-emerald-400">{currentCompany.subscriptionStatus}</span>
-                </p>
+              <div className="flex items-center gap-3">
+                <img
+                  src={currentCompany.logoUrl && (currentCompany.logoUrl.startsWith('http://') || currentCompany.logoUrl.startsWith('https://') || currentCompany.logoUrl.startsWith('data:') || currentCompany.logoUrl.startsWith('/')) ? currentCompany.logoUrl : logoImg}
+                  alt={currentCompany.name}
+                  className="w-12 h-12 aspect-square object-contain shrink-0 bg-white/10 p-1 rounded-xl"
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = logoImg || '/logo.png';
+                  }}
+                />
+                <div>
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-500/30 text-blue-200 border border-blue-400/30 mb-1">
+                    {getTranslation(language, 'multiTenantEngine')}
+                  </span>
+                  <h4 className="text-xl font-bold">{currentCompany.name}</h4>
+                  <p className="text-xs text-blue-200">
+                    {getTranslation(language, 'planLabel')} <span className="font-bold text-white">{currentCompany.subscriptionPlan}</span> • {getTranslation(language, 'statusLabel')}{' '}
+                    <span className="font-bold text-emerald-400">{currentCompany.subscriptionStatus}</span>
+                  </p>
+                </div>
               </div>
               <div className="bg-white/10 backdrop-blur px-3 py-1.5 rounded-xl text-right">
                 <div className="text-xs text-blue-200">{getTranslation(language, 'activeBranchCode')}</div>

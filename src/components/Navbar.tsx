@@ -58,7 +58,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
               <img
                 src={currentCompany?.logoUrl && (currentCompany.logoUrl.startsWith('http://') || currentCompany.logoUrl.startsWith('https://') || currentCompany.logoUrl.startsWith('data:') || currentCompany.logoUrl.startsWith('/')) ? currentCompany.logoUrl : logoImg}
                 alt="W & J Cleaners"
-                className="w-9 h-9 sm:w-11 sm:h-11 object-contain shrink-0"
+                className="w-9 h-9 sm:w-11 sm:h-11 aspect-square object-contain shrink-0"
                 onError={(e) => {
                   const target = e.currentTarget as HTMLImageElement;
                   target.onerror = null;

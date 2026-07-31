@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, KeyRound, ShieldCheck, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import logoImg from '../assets/logo.png';
 
 export const ForcePasswordChangeModal: React.FC = () => {
   const { currentUser, updateUser, addNotification } = useApp();
@@ -59,9 +60,16 @@ export const ForcePasswordChangeModal: React.FC = () => {
       <div className="bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full border border-slate-700 p-6 space-y-6 my-8 text-white relative">
         {/* Brand/Security Header */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white mx-auto shadow-lg shadow-amber-500/20">
-            <KeyRound className="w-7 h-7" />
-          </div>
+          <img
+            src={logoImg || '/logo.png'}
+            alt="W & J Cleaners Logo"
+            className="w-16 h-16 aspect-square object-contain mx-auto"
+            onError={(e) => {
+              const target = e.currentTarget as HTMLImageElement;
+              target.onerror = null;
+              target.src = '/logo.png';
+            }}
+          />
           <h2 className="text-xl font-black tracking-tight text-white">
             Primeiro Acesso: Troca de Senha
           </h2>

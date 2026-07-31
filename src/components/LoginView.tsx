@@ -37,7 +37,7 @@ export const LoginView: React.FC = () => {
           <img
             src={logoImg || '/logo.png'}
             alt="W & J Cleaners Logo"
-            className="w-20 h-20 object-contain mx-auto"
+            className="w-20 h-20 aspect-square object-contain mx-auto"
             onError={(e) => {
               const target = e.currentTarget as HTMLImageElement;
               target.onerror = null;

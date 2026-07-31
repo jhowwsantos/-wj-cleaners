@@ -18,6 +18,7 @@ async function main() {
     { out: '../public/favicon-32x32.png', width: 32, height: 32 },
     { out: '../public/favicon-16x16.png', width: 16, height: 16 },
     { out: '../public/favicon.png', width: 32, height: 32 },
+    { out: '../public/favicon.ico', width: 32, height: 32 },
     { out: '../public/og-image.png', width: 1200, height: 630, fit: 'contain', background: { r: 15, g: 23, b: 42, alpha: 1 } },
   ];
 

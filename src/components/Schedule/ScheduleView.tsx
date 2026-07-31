@@ -71,6 +71,7 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
     language,
     userRole,
     currentUser,
+    userLocation,
     currentCompany,
   } = useApp();
 
@@ -278,7 +279,13 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
     cleanerJobMap.forEach(({ cleaner, jobs: staffJobs }) => {
       const homePostcode = cleaner?.homePostcode?.trim() || currentCompany.operationalBasePostcode || 'KT9 1BH';
       const homeAddress = cleaner?.homeAddress?.trim() || currentCompany.operationalBaseAddress || 'Hook Road, Chessington';
-      const res = optimizeRoute(homePostcode, homeAddress, staffJobs);
+      const isCurrentLoggedInUser = cleaner?.id === currentUser?.id;
+      const res = optimizeRoute(
+        homePostcode,
+        homeAddress,
+        staffJobs,
+        isCurrentLoggedInUser && userLocation ? userLocation : undefined
+      );
       totalMiles += res.totalDistanceMiles;
       totalTravelMinutes += res.totalTravelTimeMinutes;
       allOrderedJobs.push(...res.jobsInOrder);

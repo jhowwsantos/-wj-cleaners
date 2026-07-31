@@ -62,11 +62,13 @@ export const CleanerMobileHub: React.FC = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2.5">
             <img
-              src={logoImg}
+              src={logoImg || '/logo.png'}
               alt="W & J Cleaners"
               className="w-7 h-7 object-contain rounded-lg bg-white/10 p-0.5 border border-white/20"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = logoImg;
+                const target = e.currentTarget as HTMLImageElement;
+                target.onerror = null;
+                target.src = '/logo.svg';
               }}
             />
             <h2 className="font-extrabold text-lg">{getTranslation(language, 'cleanerHubTitle')}</h2>

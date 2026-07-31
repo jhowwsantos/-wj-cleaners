@@ -85,12 +85,13 @@ export function calculateHaversineMiles(
 }
 
 /**
- * Optimizes the route sequence starting from cleaner base using Nearest Neighbor TSP
+ * Optimizes the route sequence starting from cleaner base or live GPS coordinates using Nearest Neighbor TSP
  */
 export function optimizeRoute(
   originPostcode: string,
   originAddress: string,
-  jobs: CleaningJob[]
+  jobs: CleaningJob[],
+  customStartCoords?: { lat: number; lng: number }
 ): RouteOptimizationResult {
   if (jobs.length === 0) {
     return {
@@ -104,7 +105,7 @@ export function optimizeRoute(
     };
   }
 
-  const startCoords = getPostcodeCoords(originPostcode);
+  const startCoords = customStartCoords || getPostcodeCoords(originPostcode);
   const unvisited = [...jobs];
   const orderedJobs: CleaningJob[] = [];
 
@@ -141,9 +142,12 @@ export function optimizeRoute(
   const totalTravelTimeMinutes = Math.round(drivingHours * 60 + orderedJobs.length * 4);
 
   // Build Google Maps Multi-Stop URL
-  // Format: https://www.google.com/maps/dir/Origin/Stop1/Stop2/...
+  const originStr = customStartCoords
+    ? `${customStartCoords.lat},${customStartCoords.lng}`
+    : `${originAddress}, ${originPostcode}`;
+
   const googlePath = [
-    encodeURIComponent(`${originAddress}, ${originPostcode}`),
+    encodeURIComponent(originStr),
     ...orderedJobs.map((j) => encodeURIComponent(`${j.address}, ${j.postcode}`)),
   ].join('/');
   const googleMapsUrl = `https://www.google.com/maps/dir/${googlePath}`;

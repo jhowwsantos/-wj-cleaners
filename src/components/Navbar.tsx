@@ -56,11 +56,13 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 
             <div className="flex items-center gap-2 shrink-0 min-w-0">
               <img
-                src={currentCompany?.logoUrl && (currentCompany.logoUrl.startsWith('http://') || currentCompany.logoUrl.startsWith('https://') || currentCompany.logoUrl.startsWith('data:')) ? currentCompany.logoUrl : logoImg}
+                src={currentCompany?.logoUrl && (currentCompany.logoUrl.startsWith('http://') || currentCompany.logoUrl.startsWith('https://') || currentCompany.logoUrl.startsWith('data:') || currentCompany.logoUrl.startsWith('/')) ? currentCompany.logoUrl : logoImg}
                 alt="W & J Cleaners"
                 className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl shadow-md shadow-blue-500/10 shrink-0"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = logoImg;
+                  const target = e.currentTarget as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = logoImg || '/logo.svg';
                 }}
               />
               <div className="shrink-0 min-w-0">

@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CleaningJob, User } from '../../types';
-import { Clock, MapPin, AlertTriangle, UserCheck } from 'lucide-react';
-import { getPostcodeCoords } from '../../utils/routeOptimizer';
+import { Clock, MapPin, AlertTriangle, UserCheck, Navigation, Crosshair } from 'lucide-react';
+import { getPostcodeCoords, optimizeRoute } from '../../utils/routeOptimizer';
+import { useApp } from '../../context/AppContext';
 
 interface LiveRouteMapProps {
   todayJobs: CleaningJob[];
@@ -31,16 +32,28 @@ export const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
   selectedCleanerId = 'ALL',
   onSelectCleaner,
 }) => {
+  const { currentUser, userLocation, locationPermissionState, requestLocationPermission } = useApp();
+
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const polylinesRef = useRef<L.Polyline[]>([]);
 
+  const isCleanerRole = currentUser.role === 'CLEANER';
+
+  // Filter jobs by cleaner role
+  const filteredJobs = useMemo(() => {
+    if (isCleanerRole) {
+      return todayJobs.filter((job) => job.cleanerId === currentUser.id);
+    }
+    return todayJobs;
+  }, [todayJobs, isCleanerRole, currentUser.id]);
+
   // Group jobs by cleaner
   const cleanerGroups = useMemo(() => {
     const groups: Map<string, { cleaner: User | null; cleanerName: string; jobs: CleaningJob[] }> = new Map();
 
-    todayJobs.forEach((job) => {
+    filteredJobs.forEach((job) => {
       const cleanerId = job.cleanerId || 'unassigned';
       const foundUser = users.find((u) => u.id === cleanerId) || null;
       const cleanerName = job.cleanerName || foundUser?.name || 'Não Atribuído';
@@ -56,18 +69,19 @@ export const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
     });
 
     return groups;
-  }, [todayJobs, users]);
+  }, [filteredJobs, users]);
 
-  // List of cleaners without home address
+  // List of cleaners without home address or GPS
   const missingAddressCleaners = useMemo(() => {
+    if (isCleanerRole) return [];
     const list: User[] = [];
     cleanerGroups.forEach(({ cleaner }) => {
-      if (cleaner && (!cleaner.homePostcode || !cleaner.homePostcode.trim()) && (!cleaner.homeAddress || !cleaner.homeAddress.trim())) {
+      if (cleaner && cleaner.id !== currentUser.id && (!cleaner.homePostcode || !cleaner.homePostcode.trim()) && (!cleaner.homeAddress || !cleaner.homeAddress.trim())) {
         list.push(cleaner);
       }
     });
     return list;
-  }, [cleanerGroups]);
+  }, [cleanerGroups, isCleanerRole, currentUser.id]);
 
   // Initialize Leaflet map instance once
   useEffect(() => {
@@ -110,70 +124,97 @@ export const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
     polylinesRef.current.forEach((p) => p.remove());
     polylinesRef.current = [];
 
-    if (todayJobs.length === 0) return;
+    if (filteredJobs.length === 0 && !userLocation) return;
 
     const allBoundingCoords: [number, number][] = [];
     let colorIdx = 0;
 
     cleanerGroups.forEach(({ cleaner, cleanerName, jobs }, cleanerId) => {
-      // Filter if a specific cleaner is selected
-      if (selectedCleanerId !== 'ALL' && selectedCleanerId !== cleanerId) return;
+      // Filter if a specific cleaner is selected (for admin)
+      if (!isCleanerRole && selectedCleanerId !== 'ALL' && selectedCleanerId !== cleanerId) return;
 
       const palette = CLEANER_COLORS[colorIdx % CLEANER_COLORS.length];
       colorIdx++;
 
+      const isCurrentLoggedInUser = (cleaner?.id || cleanerId) === currentUser.id;
+      const isGpsActive = isCurrentLoggedInUser && Boolean(userLocation);
+
       const routePoints: [number, number][] = [];
 
-      // Check if cleaner has registered home address/postcode
-      const homePostcode = cleaner?.homePostcode || '';
-      const homeAddress = cleaner?.homeAddress || '';
+      let startLatLng: [number, number] | null = null;
+      let startLabel = '';
 
-      if (homePostcode.trim() || homeAddress.trim()) {
-        const startPostcode = homePostcode.trim() || homeAddress.trim();
-        const startCoords = getPostcodeCoords(startPostcode);
-        const homeLatLng: [number, number] = [startCoords.lat, startCoords.lng];
+      if (isGpsActive && userLocation) {
+        startLatLng = [userLocation.lat, userLocation.lng];
+        startLabel = 'Minha Localização';
+      } else {
+        const homePostcode = cleaner?.homePostcode || '';
+        const homeAddress = cleaner?.homeAddress || '';
+        if (homePostcode.trim() || homeAddress.trim()) {
+          const startCoords = getPostcodeCoords(homePostcode.trim() || homeAddress.trim());
+          startLatLng = [startCoords.lat, startCoords.lng];
+          const firstName = cleanerName.split(' ')[0] || cleanerName;
+          startLabel = `Início - Casa de ${firstName}`;
+        }
+      }
 
-        routePoints.push(homeLatLng);
-        allBoundingCoords.push(homeLatLng);
+      if (startLatLng) {
+        routePoints.push(startLatLng);
+        allBoundingCoords.push(startLatLng);
 
-        const firstName = cleanerName.split(' ')[0] || cleanerName;
-
-        // Render Home Starting Marker
-        const homeHtml = `
-          <div class="relative group">
-            <div class="px-2.5 py-1 rounded-xl text-white font-black text-xs border-2 border-white shadow-xl flex items-center gap-1.5 whitespace-nowrap cursor-pointer bg-gradient-to-r ${palette.gradient} animate-pulse">
-              <span>🏠</span>
-              <span>Início - Casa de ${firstName}</span>
+        // Render Start Marker (GPS or Home)
+        const startHtml = isGpsActive
+          ? `
+            <div class="relative group">
+              <div class="px-3 py-1 rounded-xl text-white font-black text-xs border-2 border-white shadow-xl flex items-center gap-1.5 whitespace-nowrap cursor-pointer bg-gradient-to-r from-emerald-600 to-teal-600 ring-4 ring-emerald-500/30">
+                <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+                <span>📍 Minha Localização</span>
+              </div>
             </div>
-          </div>
-        `;
+          `
+          : `
+            <div class="relative group">
+              <div class="px-2.5 py-1 rounded-xl text-white font-black text-xs border-2 border-white shadow-xl flex items-center gap-1.5 whitespace-nowrap cursor-pointer bg-gradient-to-r ${palette.gradient}">
+                <span>🏠</span>
+                <span>${startLabel}</span>
+              </div>
+            </div>
+          `;
 
-        const homeIcon = L.divIcon({
-          html: homeHtml,
-          className: 'custom-home-marker',
-          iconSize: [140, 32],
-          iconAnchor: [70, 16],
+        const startIcon = L.divIcon({
+          html: startHtml,
+          className: 'custom-start-marker',
+          iconSize: [150, 32],
+          iconAnchor: [75, 16],
         });
 
-        const homeMarker = L.marker(homeLatLng, { icon: homeIcon }).addTo(map);
-        homeMarker.bindTooltip(
+        const startMarker = L.marker(startLatLng, { icon: startIcon }).addTo(map);
+        startMarker.bindTooltip(
           `
           <div class="p-1 font-sans text-xs">
-            <div class="font-bold text-emerald-600">🏠 Início da Rota (Residência)</div>
-            <div class="font-extrabold text-slate-900">Casa de ${cleanerName}</div>
-            <div class="text-[10px] text-slate-500">${homeAddress || homePostcode}</div>
+            <div class="font-bold ${isGpsActive ? 'text-emerald-600' : 'text-blue-600'}">
+              ${isGpsActive ? '📍 GPS em Tempo Real' : '🏠 Início da Rota (Residência)'}
+            </div>
+            <div class="font-extrabold text-slate-900">${isGpsActive ? 'Sua Posição Atual' : `Casa de ${cleanerName}`}</div>
           </div>
           `,
           { direction: 'top', offset: [0, -10] }
         );
 
-        markersRef.current.set(`home-${cleanerId}`, homeMarker);
+        markersRef.current.set(`start-${cleanerId}`, startMarker);
       }
 
-      // Sort jobs by start time
-      const sortedJobs = [...jobs].sort((a, b) => a.startTime.localeCompare(b.startTime));
+      // Optimize route sequence using custom GPS start coords if current user
+      const originPostcode = cleaner?.homePostcode || 'KT9 1BH';
+      const originAddress = cleaner?.homeAddress || 'Operational Base';
+      const routeResult = optimizeRoute(
+        originPostcode,
+        originAddress,
+        jobs,
+        isGpsActive && userLocation ? userLocation : undefined
+      );
 
-      sortedJobs.forEach((job, idx) => {
+      routeResult.jobsInOrder.forEach((job, idx) => {
         const jobCoordsObj = getPostcodeCoords(job.postcode);
         const jobLatLng: [number, number] = [jobCoordsObj.lat, jobCoordsObj.lng];
 
@@ -224,10 +265,10 @@ export const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
         markersRef.current.set(job.id, marker);
       });
 
-      // Draw route polyline from cleaner's home to assigned jobs
+      // Draw route polyline
       if (routePoints.length > 1) {
         const polyline = L.polyline(routePoints, {
-          color: palette.main,
+          color: isGpsActive ? '#059669' : palette.main,
           weight: 4,
           opacity: 0.85,
           dashArray: '8, 8',
@@ -241,7 +282,7 @@ export const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
       const bounds = L.latLngBounds(allBoundingCoords);
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
     }
-  }, [todayJobs, cleanerGroups, selectedCleanerId, selectedJob]);
+  }, [filteredJobs, cleanerGroups, selectedCleanerId, selectedJob, userLocation, currentUser.id, isCleanerRole]);
 
   // Center on selected job if active
   useEffect(() => {
@@ -258,9 +299,28 @@ export const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
     <div className="relative w-full h-full min-h-[340px]">
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-      {/* Floating Cleaner Route Tabs / Selector Overlay */}
-      {cleanerList.length > 0 && (
-        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 max-w-[85%]">
+      {/* GPS Status Indicator & Trigger */}
+      <div className="absolute top-3 right-3 z-10">
+        {userLocation ? (
+          <div className="px-3 py-1.5 bg-emerald-600/90 text-white rounded-xl text-xs font-bold shadow-lg backdrop-blur-md flex items-center gap-1.5 border border-emerald-400">
+            <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+            <Navigation className="w-3.5 h-3.5" />
+            <span>GPS Ao Vivo Ativo</span>
+          </div>
+        ) : (
+          <button
+            onClick={requestLocationPermission}
+            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-lg backdrop-blur-md flex items-center gap-1.5 border border-blue-400 transition-all active:scale-95"
+          >
+            <Crosshair className="w-3.5 h-3.5" />
+            <span>{locationPermissionState === 'denied' ? 'Ativar GPS (Negado)' : 'Usar Minha Localização'}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Floating Cleaner Route Tabs / Selector Overlay (ADMIN ONLY) */}
+      {!isCleanerRole && cleanerList.length > 0 && (
+        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 max-w-[70%] sm:max-w-[80%]">
           <button
             onClick={() => onSelectCleaner && onSelectCleaner('ALL')}
             className={`px-3 py-1 rounded-xl text-[11px] font-extrabold shadow-md backdrop-blur-md transition-all flex items-center gap-1.5 border ${
@@ -270,7 +330,7 @@ export const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Todas as Rotas ({todayJobs.length})
+            Todas as Rotas ({filteredJobs.length})
           </button>
 
           {cleanerList.map(({ cleaner, cleanerName, jobs }) => {
@@ -298,7 +358,7 @@ export const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
       )}
 
       {/* Warning Banner for Admin if cleaner lacks address */}
-      {missingAddressCleaners.length > 0 && (
+      {!isCleanerRole && missingAddressCleaners.length > 0 && (
         <div className="absolute top-14 left-3 right-3 sm:right-auto sm:max-w-md z-20 bg-amber-500/95 text-slate-900 dark:text-slate-900 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-amber-400 text-xs font-bold flex items-start gap-2 animate-in slide-in-from-top-2 duration-200">
           <AlertTriangle className="w-4 h-4 text-slate-900 shrink-0 mt-0.5" />
           <div>

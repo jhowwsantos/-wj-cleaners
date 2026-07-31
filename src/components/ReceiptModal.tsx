@@ -57,11 +57,13 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, job
           {/* Company Branding */}
           <div className="text-center pb-4 border-b border-slate-100 dark:border-slate-700">
             <img
-              src={currentCompany.logoUrl && (currentCompany.logoUrl.startsWith('http://') || currentCompany.logoUrl.startsWith('https://') || currentCompany.logoUrl.startsWith('data:')) ? currentCompany.logoUrl : logoImg}
+              src={currentCompany.logoUrl && (currentCompany.logoUrl.startsWith('http://') || currentCompany.logoUrl.startsWith('https://') || currentCompany.logoUrl.startsWith('data:') || currentCompany.logoUrl.startsWith('/')) ? currentCompany.logoUrl : logoImg}
               alt={currentCompany.name}
               className="w-16 h-16 object-contain mx-auto mb-2 rounded-xl shadow-sm"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = logoImg;
+                const target = e.currentTarget as HTMLImageElement;
+                target.onerror = null;
+                target.src = logoImg || '/logo.svg';
               }}
             />
             <h2 className="text-2xl font-black text-blue-900 dark:text-blue-400 tracking-tight">

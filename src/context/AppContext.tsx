@@ -96,6 +96,11 @@ interface AppContextType {
   notifications: NotificationItem[];
   markNotificationRead: (id: string) => void;
   addNotification: (title: string, message: string, type?: NotificationItem['type']) => void;
+
+  // Real-time Geolocation
+  userLocation: { lat: number; lng: number } | null;
+  locationPermissionState: 'prompt' | 'granted' | 'denied' | 'unavailable';
+  requestLocationPermission: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -161,7 +166,74 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem(`${LOCAL_STORAGE_KEY}_theme`, newTheme);
   }, []);
 
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [activeTab, setActiveTabState] = useState<string>(() => {
+    const saved = localStorage.getItem(`${LOCAL_STORAGE_KEY}_active_tab`);
+    return saved || 'dashboard';
+  });
+
+  const setActiveTab = useCallback((tab: string) => {
+    setActiveTabState(tab);
+    localStorage.setItem(`${LOCAL_STORAGE_KEY}_active_tab`, tab);
+  }, []);
+
+  // Real-time GPS Geolocation state
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationPermissionState, setLocationPermissionState] = useState<
+    'prompt' | 'granted' | 'denied' | 'unavailable'
+  >('prompt');
+
+  const requestLocationPermission = useCallback(() => {
+    if (!('geolocation' in navigator)) {
+      setLocationPermissionState('unavailable');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+        setLocationPermissionState('granted');
+      },
+      (err) => {
+        console.warn('Geolocation error:', err);
+        setLocationPermissionState('denied');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 10000 }
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!('geolocation' in navigator)) {
+      setLocationPermissionState('unavailable');
+      return;
+    }
+
+    if (isAuthenticated) {
+      requestLocationPermission();
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setUserLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+        setLocationPermissionState('granted');
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setLocationPermissionState('denied');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, [isAuthenticated, requestLocationPermission]);
 
   const [clients, setClients] = useState<Client[]>(() => {
     const saved = localStorage.getItem(`${LOCAL_STORAGE_KEY}_clients`);
@@ -362,9 +434,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const docs: User[] = [];
         snapshot.docs.forEach((d) => {
           const u = d.data() as User;
-          if (u.email?.toLowerCase() === 'teste@wjcleaners.co.uk' || u.id === 'usr_teste' || d.id === 'usr_teste') {
-            deleteDoc(doc(db, 'users', d.id)).catch(() => {});
-          } else {
+          if (u.email?.toLowerCase() !== 'teste@wjcleaners.co.uk' && u.id !== 'usr_teste' && d.id !== 'usr_teste') {
             docs.push(u);
           }
         });
@@ -1041,6 +1111,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       notifications,
       markNotificationRead,
       addNotification,
+      userLocation,
+      locationPermissionState,
+      requestLocationPermission,
     }),
     [
       isAuthenticated,
@@ -1059,6 +1132,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       companyJobs,
       companyExpenses,
       notifications,
+      userLocation,
+      locationPermissionState,
+      requestLocationPermission,
     ]
   );
 

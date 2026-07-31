@@ -35,11 +35,13 @@ export const LoginView: React.FC = () => {
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <img
-            src={logoImg}
+            src={logoImg || '/logo.png'}
             alt="W & J Cleaners Logo"
             className="w-16 h-16 object-contain rounded-2xl mx-auto shadow-lg shadow-blue-500/20 bg-white/5 p-1 border border-slate-700/50"
             onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = logoImg;
+              const target = e.currentTarget as HTMLImageElement;
+              target.onerror = null;
+              target.src = '/logo.svg';
             }}
           />
           <h1 className="text-2xl font-black text-white tracking-tight flex items-center justify-center gap-2">

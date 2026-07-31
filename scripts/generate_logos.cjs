@@ -3,8 +3,9 @@ const path = require('path');
 const sharp = require('sharp');
 
 async function main() {
+  const pngPath = path.join(__dirname, '../public/logo.png');
   const svgPath = path.join(__dirname, '../public/logo.svg');
-  const svgBuffer = fs.readFileSync(svgPath);
+  const masterBuffer = fs.existsSync(pngPath) ? fs.readFileSync(pngPath) : fs.readFileSync(svgPath);
 
   const targets = [
     { out: '../public/logo.png', width: 512, height: 512 },
@@ -30,12 +31,12 @@ async function main() {
     }
 
     if (t.fit === 'contain') {
-      await sharp(svgBuffer)
+      await sharp(masterBuffer)
         .resize(t.width, t.height, { fit: 'contain', background: t.background })
         .png()
         .toFile(outputPath);
     } else {
-      await sharp(svgBuffer)
+      await sharp(masterBuffer)
         .resize(t.width, t.height)
         .png()
         .toFile(outputPath);

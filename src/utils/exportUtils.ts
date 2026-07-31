@@ -149,7 +149,7 @@ export function printReceipt(job: CleaningJob, company: Company) {
       <body>
         <div class="header">
           <div>
-            <img src="${company.logoUrl && company.logoUrl !== '/logo.png' ? company.logoUrl : logoImg}" style="height: 54px; width: auto; margin-bottom: 8px; border-radius: 8px;" alt="${company.name}" />
+            <img src="${company.logoUrl && company.logoUrl !== '/logo.png' ? company.logoUrl : logoImg}" style="height: 54px; width: auto; margin-bottom: 8px; object-fit: contain;" alt="${company.name}" />
             <div class="logo">${company.name}</div>
             <div class="company-info">
               ${company.address}, ${company.postcode}<br/>

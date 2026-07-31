@@ -1,47 +1,75 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { CleaningJob } from '../../types';
-import { Clock, MapPin } from 'lucide-react';
+import { CleaningJob, User } from '../../types';
+import { Clock, MapPin, AlertTriangle, UserCheck } from 'lucide-react';
+import { getPostcodeCoords } from '../../utils/routeOptimizer';
 
 interface LiveRouteMapProps {
   todayJobs: CleaningJob[];
+  users: User[];
   selectedJob: CleaningJob | null;
   onSelectJob: (job: CleaningJob) => void;
+  selectedCleanerId?: string | 'ALL';
+  onSelectCleaner?: (cleanerId: string) => void;
 }
 
-// Coordinate mapping helper for London postcodes
-function getCoordinatesForJob(job: CleaningJob, index: number): [number, number] {
-  const code = (job.postcode || '').toUpperCase().trim();
+// Color palette for different cleaners on the map
+const CLEANER_COLORS = [
+  { main: '#2563eb', bg: 'bg-blue-600', gradient: 'from-blue-600 to-indigo-600', ring: 'ring-blue-500/40' },
+  { main: '#059669', bg: 'bg-emerald-600', gradient: 'from-emerald-600 to-teal-600', ring: 'ring-emerald-500/40' },
+  { main: '#9333ea', bg: 'bg-purple-600', gradient: 'from-purple-600 to-pink-600', ring: 'ring-purple-500/40' },
+  { main: '#d97706', bg: 'bg-amber-600', gradient: 'from-amber-600 to-orange-600', ring: 'ring-amber-500/40' },
+  { main: '#e11d48', bg: 'bg-rose-600', gradient: 'from-rose-600 to-red-600', ring: 'ring-rose-500/40' },
+];
 
-  if (code.includes('SW1') || code.includes('SW1A')) return [51.501, -0.141];
-  if (code.includes('EC1')) return [51.518, -0.099];
-  if (code.includes('W1')) return [51.513, -0.132];
-  if (code.includes('N1')) return [51.532, -0.106];
-  if (code.includes('W8')) return [51.501, -0.192];
-  if (code.includes('SE1')) return [51.504, -0.093];
-  if (code.includes('E1')) return [51.520, -0.076];
-  if (code.includes('KT9') || code.includes('KT19')) return [51.365 + index * 0.015, -0.312 + index * 0.01];
-
-  // Spread around London center
-  const baseLat = 51.5074;
-  const baseLng = -0.1278;
-  const latOffset = ((index * 37) % 100 - 50) * 0.002;
-  const lngOffset = ((index * 53) % 100 - 50) * 0.003;
-  return [baseLat + latOffset, baseLng + lngOffset];
-}
-
-const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
+export const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
   todayJobs,
+  users,
   selectedJob,
   onSelectJob,
+  selectedCleanerId = 'ALL',
+  onSelectCleaner,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
-  const polylineRef = useRef<L.Polyline | null>(null);
+  const polylinesRef = useRef<L.Polyline[]>([]);
 
-  // Initialize map instance once
+  // Group jobs by cleaner
+  const cleanerGroups = useMemo(() => {
+    const groups: Map<string, { cleaner: User | null; cleanerName: string; jobs: CleaningJob[] }> = new Map();
+
+    todayJobs.forEach((job) => {
+      const cleanerId = job.cleanerId || 'unassigned';
+      const foundUser = users.find((u) => u.id === cleanerId) || null;
+      const cleanerName = job.cleanerName || foundUser?.name || 'Não Atribuído';
+
+      if (!groups.has(cleanerId)) {
+        groups.set(cleanerId, {
+          cleaner: foundUser,
+          cleanerName,
+          jobs: [],
+        });
+      }
+      groups.get(cleanerId)!.jobs.push(job);
+    });
+
+    return groups;
+  }, [todayJobs, users]);
+
+  // List of cleaners without home address
+  const missingAddressCleaners = useMemo(() => {
+    const list: User[] = [];
+    cleanerGroups.forEach(({ cleaner }) => {
+      if (cleaner && (!cleaner.homePostcode || !cleaner.homePostcode.trim()) && (!cleaner.homeAddress || !cleaner.homeAddress.trim())) {
+        list.push(cleaner);
+      }
+    });
+    return list;
+  }, [cleanerGroups]);
+
+  // Initialize Leaflet map instance once
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
@@ -58,7 +86,6 @@ const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
     L.control.zoom({ position: 'topright' }).addTo(map);
     mapInstanceRef.current = map;
 
-    // ResizeObserver for responsive canvas updates without layout trashing
     const resizeObserver = new ResizeObserver(() => {
       map.invalidateSize();
     });
@@ -71,149 +98,225 @@ const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
     };
   }, []);
 
-  // Update markers and polyline when todayJobs change
+  // Render markers and polylines per cleaner
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Clean up existing markers
+    // Clear existing markers and polylines
     markersRef.current.forEach((m) => m.remove());
     markersRef.current.clear();
 
-    if (polylineRef.current) {
-      polylineRef.current.remove();
-      polylineRef.current = null;
-    }
+    polylinesRef.current.forEach((p) => p.remove());
+    polylinesRef.current = [];
 
     if (todayJobs.length === 0) return;
 
-    const latLngs: [number, number][] = [];
+    const allBoundingCoords: [number, number][] = [];
+    let colorIdx = 0;
 
-    todayJobs.forEach((job, idx) => {
-      const coords = getCoordinatesForJob(job, idx);
-      latLngs.push(coords);
+    cleanerGroups.forEach(({ cleaner, cleanerName, jobs }, cleanerId) => {
+      // Filter if a specific cleaner is selected
+      if (selectedCleanerId !== 'ALL' && selectedCleanerId !== cleanerId) return;
 
-      const isSelected = selectedJob?.id === job.id;
-      const isCompleted = job.status === 'COMPLETED';
+      const palette = CLEANER_COLORS[colorIdx % CLEANER_COLORS.length];
+      colorIdx++;
 
-      const customHtml = `
-        <div class="relative group">
-          <div class="w-9 h-9 rounded-full flex items-center justify-center font-black text-xs border-2 shadow-lg transition-transform cursor-pointer ${
-            isSelected
-              ? 'bg-blue-600 text-white border-white scale-110 ring-4 ring-blue-500/40'
-              : isCompleted
-              ? 'bg-emerald-600 text-white border-white'
-              : 'bg-white text-slate-900 border-blue-600'
-          }">
-            #${idx + 1}
+      const routePoints: [number, number][] = [];
+
+      // Check if cleaner has registered home address/postcode
+      const homePostcode = cleaner?.homePostcode || '';
+      const homeAddress = cleaner?.homeAddress || '';
+
+      if (homePostcode.trim() || homeAddress.trim()) {
+        const startPostcode = homePostcode.trim() || homeAddress.trim();
+        const startCoords = getPostcodeCoords(startPostcode);
+        const homeLatLng: [number, number] = [startCoords.lat, startCoords.lng];
+
+        routePoints.push(homeLatLng);
+        allBoundingCoords.push(homeLatLng);
+
+        const firstName = cleanerName.split(' ')[0] || cleanerName;
+
+        // Render Home Starting Marker
+        const homeHtml = `
+          <div class="relative group">
+            <div class="px-2.5 py-1 rounded-xl text-white font-black text-xs border-2 border-white shadow-xl flex items-center gap-1.5 whitespace-nowrap cursor-pointer bg-gradient-to-r ${palette.gradient} animate-pulse">
+              <span>🏠</span>
+              <span>Início - Casa de ${firstName}</span>
+            </div>
           </div>
-        </div>
-      `;
+        `;
 
-      const customIcon = L.divIcon({
-        html: customHtml,
-        className: 'custom-map-marker',
-        iconSize: [36, 36],
-        iconAnchor: [18, 18],
+        const homeIcon = L.divIcon({
+          html: homeHtml,
+          className: 'custom-home-marker',
+          iconSize: [140, 32],
+          iconAnchor: [70, 16],
+        });
+
+        const homeMarker = L.marker(homeLatLng, { icon: homeIcon }).addTo(map);
+        homeMarker.bindTooltip(
+          `
+          <div class="p-1 font-sans text-xs">
+            <div class="font-bold text-emerald-600">🏠 Início da Rota (Residência)</div>
+            <div class="font-extrabold text-slate-900">Casa de ${cleanerName}</div>
+            <div class="text-[10px] text-slate-500">${homeAddress || homePostcode}</div>
+          </div>
+          `,
+          { direction: 'top', offset: [0, -10] }
+        );
+
+        markersRef.current.set(`home-${cleanerId}`, homeMarker);
+      }
+
+      // Sort jobs by start time
+      const sortedJobs = [...jobs].sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+      sortedJobs.forEach((job, idx) => {
+        const jobCoordsObj = getPostcodeCoords(job.postcode);
+        const jobLatLng: [number, number] = [jobCoordsObj.lat, jobCoordsObj.lng];
+
+        routePoints.push(jobLatLng);
+        allBoundingCoords.push(jobLatLng);
+
+        const isSelected = selectedJob?.id === job.id;
+        const isCompleted = job.status === 'COMPLETED';
+
+        const customHtml = `
+          <div class="relative group">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center font-black text-xs border-2 shadow-lg transition-transform cursor-pointer ${
+              isSelected
+                ? 'bg-blue-600 text-white border-white scale-120 ring-4 ring-blue-500/50'
+                : isCompleted
+                ? 'bg-emerald-600 text-white border-white'
+                : `${palette.bg} text-white border-white`
+            }">
+              #${idx + 1}
+            </div>
+          </div>
+        `;
+
+        const customIcon = L.divIcon({
+          html: customHtml,
+          className: 'custom-map-marker',
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+        });
+
+        const marker = L.marker(jobLatLng, { icon: customIcon }).addTo(map);
+
+        marker.bindTooltip(
+          `
+          <div class="p-1.5 font-sans text-xs">
+            <div class="font-bold text-blue-600">#${idx + 1} ${job.startTime} (${cleanerName})</div>
+            <div class="font-extrabold text-slate-900">${job.clientName}</div>
+            <div class="text-[10px] text-slate-500">${job.address}, ${job.postcode}</div>
+          </div>
+          `,
+          { direction: 'top', offset: [0, -10] }
+        );
+
+        marker.on('click', () => {
+          onSelectJob(job);
+        });
+
+        markersRef.current.set(job.id, marker);
       });
 
-      const marker = L.marker(coords, { icon: customIcon }).addTo(map);
+      // Draw route polyline from cleaner's home to assigned jobs
+      if (routePoints.length > 1) {
+        const polyline = L.polyline(routePoints, {
+          color: palette.main,
+          weight: 4,
+          opacity: 0.85,
+          dashArray: '8, 8',
+        }).addTo(map);
 
-      marker.bindTooltip(
-        `
-        <div class="p-1 font-sans text-xs">
-          <div class="font-bold text-blue-600">#${idx + 1} ${job.startTime}</div>
-          <div class="font-extrabold text-slate-900">${job.clientName}</div>
-          <div class="text-[10px] text-slate-500">${job.postcode}</div>
-        </div>
-        `,
-        { direction: 'top', offset: [0, -10] }
-      );
-
-      marker.on('click', () => {
-        onSelectJob(job);
-      });
-
-      markersRef.current.set(job.id, marker);
+        polylinesRef.current.push(polyline);
+      }
     });
 
-    if (latLngs.length > 1) {
-      polylineRef.current = L.polyline(latLngs, {
-        color: '#10b981',
-        weight: 4,
-        opacity: 0.85,
-        dashArray: '8, 8',
-      }).addTo(map);
+    if (allBoundingCoords.length > 0) {
+      const bounds = L.latLngBounds(allBoundingCoords);
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
     }
+  }, [todayJobs, cleanerGroups, selectedCleanerId, selectedJob]);
 
-    if (latLngs.length > 0) {
-      const bounds = L.latLngBounds(latLngs);
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
-    }
-  }, [todayJobs]);
-
-  // Handle selectedJob highlighting and panning without destroying markers
+  // Center on selected job if active
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    if (!map || !selectedJob) return;
 
-    todayJobs.forEach((job, idx) => {
-      const marker = markersRef.current.get(job.id);
-      if (!marker) return;
+    const coordsObj = getPostcodeCoords(selectedJob.postcode);
+    map.panTo([coordsObj.lat, coordsObj.lng], { animate: true });
+  }, [selectedJob]);
 
-      const isSelected = selectedJob?.id === job.id;
-      const isCompleted = job.status === 'COMPLETED';
-
-      const customHtml = `
-        <div class="relative group">
-          <div class="w-9 h-9 rounded-full flex items-center justify-center font-black text-xs border-2 shadow-lg transition-transform cursor-pointer ${
-            isSelected
-              ? 'bg-blue-600 text-white border-white scale-110 ring-4 ring-blue-500/40'
-              : isCompleted
-              ? 'bg-emerald-600 text-white border-white'
-              : 'bg-white text-slate-900 border-blue-600'
-          }">
-            #${idx + 1}
-          </div>
-        </div>
-      `;
-
-      const customIcon = L.divIcon({
-        html: customHtml,
-        className: 'custom-map-marker',
-        iconSize: [36, 36],
-        iconAnchor: [18, 18],
-      });
-
-      marker.setIcon(customIcon);
-    });
-
-    if (selectedJob) {
-      const idx = todayJobs.findIndex((j) => j.id === selectedJob.id);
-      if (idx !== -1) {
-        const coords = getCoordinatesForJob(selectedJob, idx);
-        map.panTo(coords, { animate: true });
-      }
-    }
-  }, [selectedJob, todayJobs]);
+  const cleanerList = Array.from(cleanerGroups.values());
 
   return (
-    <div className="relative w-full h-full min-h-[320px]">
+    <div className="relative w-full h-full min-h-[340px]">
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-      {/* Map Floating Badge */}
-      <div className="absolute top-3 left-3 z-10 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-2 pointer-events-none">
-        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-        London Central Area ({todayJobs.length} Stops)
-      </div>
+      {/* Floating Cleaner Route Tabs / Selector Overlay */}
+      {cleanerList.length > 0 && (
+        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 max-w-[85%]">
+          <button
+            onClick={() => onSelectCleaner && onSelectCleaner('ALL')}
+            className={`px-3 py-1 rounded-xl text-[11px] font-extrabold shadow-md backdrop-blur-md transition-all flex items-center gap-1.5 border ${
+              selectedCleanerId === 'ALL'
+                ? 'bg-slate-900 text-white border-slate-700'
+                : 'bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-white'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            Todas as Rotas ({todayJobs.length})
+          </button>
 
-      {/* Selected Location Card Overlay */}
+          {cleanerList.map(({ cleaner, cleanerName, jobs }) => {
+            const cleanerId = cleaner?.id || cleanerName;
+            const isSelected = selectedCleanerId === cleanerId;
+            const firstName = cleanerName.split(' ')[0] || cleanerName;
+            const hasHome = Boolean(cleaner?.homePostcode || cleaner?.homeAddress);
+
+            return (
+              <button
+                key={cleanerId}
+                onClick={() => onSelectCleaner && onSelectCleaner(cleanerId)}
+                className={`px-3 py-1 rounded-xl text-[11px] font-extrabold shadow-md backdrop-blur-md transition-all flex items-center gap-1.5 border ${
+                  isSelected
+                    ? 'bg-blue-600 text-white border-blue-500'
+                    : 'bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-white'
+                }`}
+              >
+                <span>{hasHome ? '🏠' : '⚠️'}</span>
+                <span>{firstName} ({jobs.length})</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Warning Banner for Admin if cleaner lacks address */}
+      {missingAddressCleaners.length > 0 && (
+        <div className="absolute top-14 left-3 right-3 sm:right-auto sm:max-w-md z-20 bg-amber-500/95 text-slate-900 dark:text-slate-900 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-amber-400 text-xs font-bold flex items-start gap-2 animate-in slide-in-from-top-2 duration-200">
+          <AlertTriangle className="w-4 h-4 text-slate-900 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-extrabold uppercase text-[10px] text-slate-900 block tracking-wider">Aviso para o Administrador</span>
+            <span>
+              O(s) funcionário(s) <strong>{missingAddressCleaners.map((u) => u.name).join(', ')}</strong> não possui(em) endereço residencial cadastrado. Cadastre no perfil para iniciar a rota na residência.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Selected Location Overlay Card */}
       {selectedJob && (
         <div className="absolute bottom-3 right-3 left-3 sm:left-auto sm:max-w-xs z-20 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl space-y-2 animate-in slide-in-from-bottom-2 duration-150">
           <div className="flex justify-between items-start">
             <div>
               <span className="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400">
-                SELECTED LOCATION
+                LOCAL SELECIONADO
               </span>
               <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
                 {selectedJob.clientName}
@@ -227,9 +330,17 @@ const LiveRouteMapComponent: React.FC<LiveRouteMapProps> = ({
             <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0" />
             <span className="truncate">{selectedJob.address}, {selectedJob.postcode}</span>
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
-            <Clock className="w-3 h-3 text-blue-500" />
-            <span>{selectedJob.startTime} ({selectedJob.estimatedDuration} hrs)</span>
+          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-blue-500" />
+              <span>{selectedJob.startTime} ({selectedJob.estimatedDuration} hrs)</span>
+            </div>
+            {selectedJob.cleanerName && (
+              <div className="flex items-center gap-1 text-emerald-600 font-bold">
+                <UserCheck className="w-3.5 h-3.5" />
+                <span>{selectedJob.cleanerName.split(' ')[0]}</span>
+              </div>
+            )}
           </div>
         </div>
       )}

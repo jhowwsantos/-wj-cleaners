@@ -260,13 +260,37 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
     const netProfit = totalRevenue - staffCosts - dailyExpenses;
     const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
-    // Route calculation: optimized driving sequence starting from company operational base
-    const basePostcode = currentCompany.operationalBasePostcode || 'KT9 1BH';
-    const baseAddress = currentCompany.operationalBaseAddress || 'Hook Road, Chessington';
+    // Route calculation: optimized driving sequence per cleaner starting from staff home addresses
+    const cleanerJobMap = new Map<string, { cleaner: any; jobs: typeof activeJobs }>();
+    activeJobs.forEach((job) => {
+      const cId = job.cleanerId || 'unassigned';
+      const foundCleaner = users.find((u) => u.id === cId) || null;
+      if (!cleanerJobMap.has(cId)) {
+        cleanerJobMap.set(cId, { cleaner: foundCleaner, jobs: [] });
+      }
+      cleanerJobMap.get(cId)!.jobs.push(job);
+    });
 
-    const routeResult = optimizeRoute(basePostcode, baseAddress, activeJobs);
+    let totalMiles = 0;
+    let totalTravelMinutes = 0;
+    const allOrderedJobs: typeof activeJobs = [];
 
-    const routeList = routeResult.jobsInOrder.map((job) => ({
+    cleanerJobMap.forEach(({ cleaner, jobs: staffJobs }) => {
+      const homePostcode = cleaner?.homePostcode?.trim() || currentCompany.operationalBasePostcode || 'KT9 1BH';
+      const homeAddress = cleaner?.homeAddress?.trim() || currentCompany.operationalBaseAddress || 'Hook Road, Chessington';
+      const res = optimizeRoute(homePostcode, homeAddress, staffJobs);
+      totalMiles += res.totalDistanceMiles;
+      totalTravelMinutes += res.totalTravelTimeMinutes;
+      allOrderedJobs.push(...res.jobsInOrder);
+    });
+
+    const routeResult = optimizeRoute(
+      currentCompany.operationalBasePostcode || 'KT9 1BH',
+      currentCompany.operationalBaseAddress || 'Hook Road, Chessington',
+      allOrderedJobs.length > 0 ? allOrderedJobs : activeJobs
+    );
+
+    const routeList = (allOrderedJobs.length > 0 ? allOrderedJobs : activeJobs).map((job) => ({
       job,
       cleaner: job.cleanerName || users.find((u) => u.id === job.cleanerId)?.name || 'Não atribuído',
     }));
@@ -282,10 +306,10 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
       profitMargin,
       routeList,
       routeResult,
-      originPostcode: basePostcode,
-      originAddress: baseAddress,
-      estimatedMiles: routeResult.totalDistanceMiles,
-      estimatedTravelMinutes: routeResult.totalTravelTimeMinutes,
+      originPostcode: currentCompany.operationalBasePostcode || 'KT9 1BH',
+      originAddress: currentCompany.operationalBaseAddress || 'Hook Road, Chessington',
+      estimatedMiles: Math.round(totalMiles * 10) / 10 || routeResult.totalDistanceMiles,
+      estimatedTravelMinutes: totalTravelMinutes || routeResult.totalTravelTimeMinutes,
     };
   }, [
     rawSelectedDateJobs,

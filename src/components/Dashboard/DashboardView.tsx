@@ -55,6 +55,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({
   } = useApp();
 
   const [selectedMapJob, setSelectedMapJob] = useState<CleaningJob | null>(null);
+  const [selectedCleanerId, setSelectedCleanerId] = useState<string | 'ALL'>('ALL');
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
@@ -327,8 +328,11 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({
         <div className="relative h-80 sm:h-96 bg-slate-100 dark:bg-slate-900 overflow-hidden">
           <LiveRouteMap
             todayJobs={todayJobs}
+            users={users}
             selectedJob={activeJob}
             onSelectJob={(job) => setSelectedMapJob(job)}
+            selectedCleanerId={selectedCleanerId}
+            onSelectCleaner={(cId) => setSelectedCleanerId(cId)}
           />
         </div>
       </div>

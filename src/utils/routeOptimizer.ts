@@ -2,7 +2,10 @@ import { CleaningJob, RouteOptimizationResult } from '../types';
 
 // Approximate coordinates lookup for UK postcode outward codes and sample postcodes
 const UK_POSTCODE_COORDS: Record<string, { lat: number; lng: number }> = {
-  'NW1 6XE': { lat: 51.5237, lng: -0.1585 }, // Baker Street
+  'NW1 6XE': { lat: 51.5237, lng: -0.1585 }, // Baker Street (Jhonatan)
+  'E1 6AN': { lat: 51.5173, lng: -0.0735 }, // Commercial St (Waylla)
+  'SW11 1AA': { lat: 51.4700, lng: -0.1680 }, // Battersea Park Rd (Maria Silva)
+  'W11 3HP': { lat: 51.5120, lng: -0.2070 }, // Kensington Park Gardens (Scott)
   'W1J 8AJ': { lat: 51.5074, lng: -0.1425 }, // Mayfair
   'EC2N 4BQ': { lat: 51.5152, lng: -0.0827 }, // Bishopsgate / City
   'W8 4PE': { lat: 51.5015, lng: -0.1918 }, // Kensington
@@ -10,9 +13,20 @@ const UK_POSTCODE_COORDS: Record<string, { lat: number; lng: number }> = {
   'NW1 8AG': { lat: 51.5413, lng: -0.1462 }, // Camden
   'SW1V 1RB': { lat: 51.4922, lng: -0.1408 }, // Victoria/Belgrave
   'N1 9AL': { lat: 51.5332, lng: -0.1061 }, // Islington
-  'E1 6AN': { lat: 51.5173, lng: -0.0735 }, // Whitechapel / Spitalfields
   'M3 2AY': { lat: 53.4808, lng: -2.2426 }, // Manchester Deansgate
   'KT9 1BH': { lat: 51.3653, lng: -0.3082 }, // Operational Base / Chessington Depot
+  // Outward code area fallbacks
+  'SW11': { lat: 51.4700, lng: -0.1680 },
+  'NW1': { lat: 51.5300, lng: -0.1500 },
+  'E1': { lat: 51.5170, lng: -0.0700 },
+  'W11': { lat: 51.5120, lng: -0.2070 },
+  'SW1': { lat: 51.5010, lng: -0.1410 },
+  'W1': { lat: 51.5130, lng: -0.1320 },
+  'EC1': { lat: 51.5180, lng: -0.0990 },
+  'N1': { lat: 51.5320, lng: -0.1060 },
+  'W8': { lat: 51.5010, lng: -0.1920 },
+  'SE1': { lat: 51.5040, lng: -0.0930 },
+  'KT9': { lat: 51.3650, lng: -0.3080 },
 };
 
 /**
@@ -24,8 +38,12 @@ export function getPostcodeCoords(postcode: string): { lat: number; lng: number 
     return UK_POSTCODE_COORDS[clean];
   }
 
-  // Fallback estimation based on outward code prefix
+  // Check outward code (first part of postcode, e.g. "SW11" from "SW11 1AA")
   const prefix = clean.split(' ')[0];
+  if (UK_POSTCODE_COORDS[prefix]) {
+    return UK_POSTCODE_COORDS[prefix];
+  }
+
   let hash = 0;
   for (let i = 0; i < prefix.length; i++) {
     hash += prefix.charCodeAt(i);

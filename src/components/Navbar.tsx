@@ -58,11 +58,11 @@ const NavbarComponent: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
               <img
                 src={currentCompany?.logoUrl && (currentCompany.logoUrl.startsWith('http://') || currentCompany.logoUrl.startsWith('https://') || currentCompany.logoUrl.startsWith('data:') || currentCompany.logoUrl.startsWith('/')) ? currentCompany.logoUrl : logoImg}
                 alt="W & J Cleaners"
-                className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl shadow-md shadow-blue-500/10 shrink-0"
+                className="w-9 h-9 sm:w-11 sm:h-11 object-contain shrink-0"
                 onError={(e) => {
                   const target = e.currentTarget as HTMLImageElement;
                   target.onerror = null;
-                  target.src = logoImg || '/logo.svg';
+                  target.src = logoImg || '/logo.png';
                 }}
               />
               <div className="shrink-0 min-w-0">

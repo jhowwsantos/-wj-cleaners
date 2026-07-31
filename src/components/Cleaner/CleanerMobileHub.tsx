@@ -64,11 +64,11 @@ export const CleanerMobileHub: React.FC = () => {
             <img
               src={logoImg || '/logo.png'}
               alt="W & J Cleaners"
-              className="w-7 h-7 object-contain rounded-lg bg-white/10 p-0.5 border border-white/20"
+              className="w-8 h-8 object-contain shrink-0"
               onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
                 target.onerror = null;
-                target.src = '/logo.svg';
+                target.src = '/logo.png';
               }}
             />
             <h2 className="font-extrabold text-lg">{getTranslation(language, 'cleanerHubTitle')}</h2>

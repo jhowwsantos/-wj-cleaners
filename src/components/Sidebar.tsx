@@ -110,11 +110,11 @@ const SidebarComponent: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <img
               src={logoImg || '/logo.png'}
               alt="W & J Logo"
-              className="w-5 h-5 object-contain"
+              className="w-6 h-6 object-contain shrink-0"
               onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
                 target.onerror = null;
-                target.src = '/logo.svg';
+                target.src = '/logo.png';
               }}
             />
             <span className="font-bold text-xs text-slate-700 dark:text-slate-300">W & J Cleaners</span>

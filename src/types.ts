@@ -70,6 +70,7 @@ export interface Client {
   frequency: CleaningFrequency;
   customIntervalDays?: number;
   customStartDate?: string;
+  customEndDate?: string;
   preferredDayOfWeek: number; // 0=Sunday, 1=Monday ... 6=Saturday
   preferredTime: string; // e.g., "09:00"
   hasKey: boolean;
@@ -130,6 +131,7 @@ export interface CleaningJob {
   frequency?: CleaningFrequency;
   customIntervalDays?: number;
   customStartDate?: string;
+  customEndDate?: string;
   isDeleted?: boolean;
   isRescheduled?: boolean;
   createdAt?: string;

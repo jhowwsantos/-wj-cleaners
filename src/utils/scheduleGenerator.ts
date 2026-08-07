@@ -38,6 +38,11 @@ export function isClientRecurringOnDate(
   const targetDate = new Date(targetDateStr + 'T00:00:00');
   if (isNaN(targetDate.getTime())) return false;
 
+  // Do not generate recurring jobs after client's end date (if defined)
+  if (client.customEndDate && targetDateStr > client.customEndDate) {
+    return false;
+  }
+
   if (client.frequency === 'CUSTOM_DAYS') {
     const customDays = client.customIntervalDays && client.customIntervalDays > 0 ? client.customIntervalDays : 20;
     let baseDateStr = client.customStartDate;
@@ -54,6 +59,10 @@ export function isClientRecurringOnDate(
 
     if (!baseDateStr) {
       baseDateStr = client.createdAt ? client.createdAt.split('T')[0] : '2026-01-01';
+    }
+
+    if (baseDateStr && targetDateStr < baseDateStr) {
+      return false;
     }
 
     let baseDate = new Date(baseDateStr + 'T00:00:00');
@@ -287,6 +296,7 @@ export function getCombinedJobsForDate(
         petNotes: client.petNotes,
         customIntervalDays: client.customIntervalDays,
         customStartDate: client.customStartDate,
+        customEndDate: client.customEndDate,
         invoiceNumber: `INV-${targetDateStr.replace(/-/g, '')}-${client.id.slice(-4)}`,
       });
     }

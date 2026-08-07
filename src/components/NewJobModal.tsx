@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, PoundSterling, User, CheckCircle2, FileText, Repeat } from 'lucide-react';
+import { X, Calendar, Clock, PoundSterling, User, CheckCircle2, FileText, Repeat, Sparkles } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslation } from '../utils/i18n';
 import { StaffMultiSelect } from './StaffMultiSelect';
@@ -28,6 +28,8 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
     price: clients[0]?.defaultPrice || 45,
     frequency: (clients[0]?.frequency || 'ONE_OFF') as CleaningFrequency,
     customIntervalDays: clients[0]?.customIntervalDays || 20,
+    recurrenceMode: 'AUTO_INDEFINITE' as 'AUTO_INDEFINITE' | 'FIXED_COUNT',
+    customEndDate: clients[0]?.customEndDate || '',
     repeatCount: 8,
     notes: '',
   });
@@ -49,6 +51,7 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
         estimatedDuration: first.estimatedDuration,
         frequency: first.frequency || 'ONE_OFF',
         customIntervalDays: first.customIntervalDays || 20,
+        customEndDate: first.customEndDate || '',
       }));
     }
   }, [clients]);
@@ -71,6 +74,7 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
         estimatedDuration: client.estimatedDuration,
         frequency: client.frequency || 'ONE_OFF',
         customIntervalDays: client.customIntervalDays || 20,
+        customEndDate: client.customEndDate || '',
       }));
       if (client.preferredCleanerId) {
         setSelectedCleanerIds([client.preferredCleanerId]);
@@ -89,7 +93,10 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
     const cleanerIdStr = selectedCleanerIds.join(', ');
     const cleanerNameStr = assignedUsers.map((u) => u.name).join(', ') || 'Nenhum';
 
-    const occurrences = formData.frequency === 'ONE_OFF' ? 1 : Math.max(1, Math.min(52, Number(formData.repeatCount) || 8));
+    const isAutoIndefinite = formData.frequency !== 'ONE_OFF' && formData.recurrenceMode === 'AUTO_INDEFINITE';
+    const occurrences = (formData.frequency === 'ONE_OFF' || isAutoIndefinite)
+      ? 1
+      : Math.max(1, Math.min(52, Number(formData.repeatCount) || 8));
 
     let intervalDays = 7;
     if (formData.frequency === 'FORTNIGHTLY') intervalDays = 14;
@@ -126,6 +133,7 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
         frequency: formData.frequency,
         customIntervalDays: formData.frequency === 'CUSTOM_DAYS' ? Number(formData.customIntervalDays) : undefined,
         customStartDate: formData.date,
+        customEndDate: formData.customEndDate.trim() || undefined,
       });
     }
 
@@ -254,7 +262,7 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
+              <div className={formData.frequency === 'ONE_OFF' ? 'sm:col-span-2' : ''}>
                 <select
                   value={formData.frequency}
                   onChange={(e) =>
@@ -305,38 +313,124 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
                   />
                 </div>
               )}
-
-              {formData.frequency !== 'ONE_OFF' && (
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
-                    {language === 'pt' ? 'Ocorrências no Firestore' : 'Occurrences in Firestore'}
-                  </label>
-                  <select
-                    value={formData.repeatCount}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        repeatCount: Number(e.target.value),
-                      })
-                    }
-                    className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
-                  >
-                    <option value={4}>{language === 'pt' ? 'Próximas 4 ocorrências' : 'Next 4 occurrences'}</option>
-                    <option value={8}>{language === 'pt' ? 'Próximas 8 ocorrências (Padrão)' : 'Next 8 occurrences (Default)'}</option>
-                    <option value={12}>{language === 'pt' ? 'Próximas 12 ocorrências' : 'Next 12 occurrences'}</option>
-                    <option value={24}>{language === 'pt' ? 'Próximas 24 ocorrências' : 'Next 24 occurrences'}</option>
-                    <option value={52}>{language === 'pt' ? 'Próximas 52 ocorrências (1 ano)' : 'Next 52 occurrences (1 year)'}</option>
-                  </select>
-                </div>
-              )}
             </div>
 
             {formData.frequency !== 'ONE_OFF' && (
-              <p className="text-[11px] text-indigo-600 dark:text-indigo-300 font-medium bg-indigo-50 dark:bg-indigo-950/60 p-2 rounded-lg border border-indigo-100 dark:border-indigo-900">
-                {language === 'pt'
-                  ? `💡 Serão gerados e salvos ${formData.repeatCount} agendamentos recorrentes no Firestore a partir de ${formData.date}.`
-                  : `💡 ${formData.repeatCount} recurring appointments will be created and persisted in Firestore starting from ${formData.date}.`}
-              </p>
+              <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 block">
+                  {language === 'pt' ? 'Modo de Geração da Recorrência' : 'Recurrence Generation Mode'}
+                </label>
+
+                {/* Cards for Recurrence Mode selection */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, recurrenceMode: 'AUTO_INDEFINITE' })}
+                    className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                      formData.recurrenceMode === 'AUTO_INDEFINITE'
+                        ? 'bg-blue-50/90 dark:bg-blue-950/70 border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        {language === 'pt' ? 'Automático (Indefinido)' : 'Automatic (Indefinite)'}
+                      </span>
+                      <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300/60 dark:border-amber-800 shrink-0">
+                        ⭐ Ideal
+                      </span>
+                    </div>
+                    <p className="text-[10px] font-medium text-slate-600 dark:text-slate-300 leading-tight">
+                      {language === 'pt'
+                        ? 'Geração dinâmica conforme navega pelo calendário (sem limite de datas e sem lotar o banco).'
+                        : 'Dynamic calendar projection as you navigate (no limits, zero DB bloat).'}
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, recurrenceMode: 'FIXED_COUNT' })}
+                    className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                      formData.recurrenceMode === 'FIXED_COUNT'
+                        ? 'bg-blue-50/90 dark:bg-blue-950/70 border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className="text-xs font-black text-slate-900 dark:text-white mb-1">
+                      {language === 'pt' ? 'Quantidade definida' : 'Fixed Count'}
+                    </span>
+                    <p className="text-[10px] font-medium text-slate-600 dark:text-slate-300 leading-tight">
+                      {language === 'pt'
+                        ? 'Gera e salva uma quantidade fixa de agendamentos no Firestore.'
+                        : 'Creates and saves a set number of fixed job records in Firestore.'}
+                    </p>
+                  </button>
+                </div>
+
+                {formData.recurrenceMode === 'AUTO_INDEFINITE' ? (
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
+                        {language === 'pt' ? 'Data Final da Recorrência (Opcional)' : 'End Date (Optional)'}
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.customEndDate}
+                        onChange={(e) => setFormData({ ...formData, customEndDate: e.target.value })}
+                        className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                        {language === 'pt'
+                          ? 'Deixe em branco para manter ativa por tempo indeterminado.'
+                          : 'Leave blank to keep active indefinitely.'}
+                      </p>
+                    </div>
+
+                    <div className="text-[11px] text-amber-900 dark:text-amber-200 font-medium bg-amber-50 dark:bg-amber-950/60 p-2.5 rounded-xl border border-amber-200/80 dark:border-amber-800 flex items-start gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>{language === 'pt' ? '⭐ Recomendado para Clientes Fixos' : '⭐ Recommended for Fixed Clients'}</strong>
+                        <p className="mt-0.5 text-[10px] text-amber-800 dark:text-amber-300">
+                          {language === 'pt'
+                            ? 'A regra da recorrência é salva no cliente. Conforme você navega no calendário (meses ou anos futuros/passados), as ocorrências são calculadas e exibidas automaticamente.'
+                            : 'The recurrence rule is stored on the client. As you browse the calendar (future or past months/years), occurrences are projected dynamically.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
+                        {language === 'pt' ? 'Ocorrências no Firestore' : 'Occurrences in Firestore'}
+                      </label>
+                      <select
+                        value={formData.repeatCount}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            repeatCount: Number(e.target.value),
+                          })
+                        }
+                        className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
+                      >
+                        <option value={4}>{language === 'pt' ? 'Próximas 4 ocorrências' : 'Next 4 occurrences'}</option>
+                        <option value={8}>{language === 'pt' ? 'Próximas 8 ocorrências (Padrão)' : 'Next 8 occurrences (Default)'}</option>
+                        <option value={12}>{language === 'pt' ? 'Próximas 12 ocorrências' : 'Next 12 occurrences'}</option>
+                        <option value={24}>{language === 'pt' ? 'Próximas 24 ocorrências' : 'Next 24 occurrences'}</option>
+                        <option value={52}>{language === 'pt' ? 'Próximas 52 ocorrências (1 ano)' : 'Next 52 occurrences (1 year)'}</option>
+                      </select>
+                    </div>
+
+                    <p className="text-[11px] text-indigo-600 dark:text-indigo-300 font-medium bg-indigo-50 dark:bg-indigo-950/60 p-2 rounded-lg border border-indigo-100 dark:border-indigo-900">
+                      {language === 'pt'
+                        ? `💡 Serão gerados e salvos ${formData.repeatCount} agendamentos fixos no Firestore a partir de ${formData.date}.`
+                        : `💡 ${formData.repeatCount} fixed appointments will be created and persisted in Firestore starting from ${formData.date}.`}
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

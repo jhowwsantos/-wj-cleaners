@@ -1141,6 +1141,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (j.customIntervalDays) {
           clientUpdates.customIntervalDays = j.customIntervalDays;
         }
+        if (j.customEndDate !== undefined) {
+          clientUpdates.customEndDate = j.customEndDate;
+        }
         if (client.frequency !== 'CUSTOM_DAYS' && !isNaN(jobDay)) {
           clientUpdates.preferredDayOfWeek = jobDay;
         }

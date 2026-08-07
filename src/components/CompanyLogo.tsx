@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Building2 } from 'lucide-react';
 import { Company } from '../types';
+import logoImg from '../assets/logo.png';
 
 interface CompanyLogoProps {
   company: Partial<Company> & { name: string };
@@ -22,22 +23,18 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
     setImageError(false);
   }, [company.logoUrl]);
 
-  // Check if company has a valid custom logo
-  const isWJ = company.id === 'comp_wj_london';
-  const logoUrl = company.logoUrl?.trim();
-  
-  // Valid logo if:
-  // 1. It's W&J Cleaners and has a logoUrl
-  // 2. Or it's another company and logoUrl is NOT empty, NOT '/logo.png', NOT containing default assets
-  const hasCustomLogo =
-    Boolean(logoUrl) &&
-    (isWJ || (logoUrl !== '/logo.png' && !logoUrl?.endsWith('/assets/logo.png')));
+  // Check if company is W&J Cleaners or another company with a logo
+  const isWJ = !company.id || company.id === 'comp_wj_london' || company.name?.toLowerCase().includes('w & j');
+  const customUrl = company.logoUrl?.trim();
+  const effectiveLogoUrl = customUrl || (isWJ ? logoImg || '/logo.png' : '');
 
-  if (hasCustomLogo && !imageError && logoUrl) {
+  const hasCustomLogo = Boolean(effectiveLogoUrl);
+
+  if (hasCustomLogo && !imageError && effectiveLogoUrl) {
     return (
       <img
-        src={logoUrl}
-        alt={company.name}
+        src={effectiveLogoUrl}
+        alt={company.name || 'W & J Cleaners'}
         className={`${className} object-contain p-0.5 shrink-0 border border-slate-200 dark:border-slate-700/80 shadow-xs bg-white dark:bg-slate-800`}
         onError={() => setImageError(true)}
       />

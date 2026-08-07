@@ -134,9 +134,9 @@ export const SaaSAdminModal: React.FC<SaaSAdminModalProps> = ({ isOpen, onClose 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-700 overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto max-h-[90vh] flex flex-col">
-        <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/80">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-2 sm:p-4 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-700 overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto max-h-[92vh] sm:max-h-[90vh] flex flex-col">
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/80 shrink-0">
           <div className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">
@@ -153,7 +153,7 @@ export const SaaSAdminModal: React.FC<SaaSAdminModalProps> = ({ isOpen, onClose 
           </button>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-6 flex-1 overflow-y-auto overscroll-contain touch-pan-y">
           {/* SaaS Overview Banner */}
           <div className="bg-gradient-to-r from-blue-900 to-indigo-800 p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
             <Sparkles className="w-24 h-24 absolute -right-4 -bottom-4 opacity-15 pointer-events-none" />

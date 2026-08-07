@@ -2110,9 +2110,9 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
 
       {/* Edit Job Modal */}
       {editingJob && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 dark:border-slate-700 overflow-hidden animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/80 sticky top-0 z-10">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-2 sm:p-4 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 dark:border-slate-700 overflow-hidden animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] sm:max-h-[90vh] flex flex-col my-auto">
+            <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/80 shrink-0">
               <h3 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
                 <Edit className="w-5 h-5 text-blue-600" />
                 Editar Agendamento
@@ -2122,7 +2122,7 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleSaveEditedJob} className="p-6 space-y-4">
+            <form onSubmit={handleSaveEditedJob} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 overscroll-contain touch-pan-y">
               <div>
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   Nome do Cliente

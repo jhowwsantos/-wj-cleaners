@@ -1,0 +1,6 @@
+{
+  "name": "W & J Cleaners",
+  "description": "Comprehensive management system for cleaning businesses in the UK, featuring client management, smart scheduling, route optimization, financial tracking, and multi-tenant capabilities.",
+  "requestFramePermissions": ["geolocation", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

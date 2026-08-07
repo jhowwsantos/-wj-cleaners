@@ -75,8 +75,8 @@ export function isClientRecurringOnDate(
   // Determine the base reference date anchor for start bounds and cycle calculation
   let baseDateStr = client.customStartDate;
 
-  // If explicitJobs supplied, check if client has an explicit job date on preferredDay to anchor
-  if (!baseDateStr && explicitJobs && explicitJobs.length > 0) {
+  // Check explicitJobs for the earliest explicit job date to anchor baseDateStr
+  if (explicitJobs && explicitJobs.length > 0) {
     const clientJobs = explicitJobs.filter(
       (j) => j.clientId === client.id && !(j as any).isDeleted && (j.status as string) !== 'DELETED'
     );
@@ -85,14 +85,16 @@ export function isClientRecurringOnDate(
         .filter((j) => new Date(j.date + 'T00:00:00').getDay() === preferredDay)
         .map((j) => j.date)
         .sort();
-      if (datesOnPreferredDay.length > 0) {
-        baseDateStr = datesOnPreferredDay[0];
+      const earliestJobDate = datesOnPreferredDay[0] || clientJobs.map((j) => j.date).sort()[0];
+      if (earliestJobDate && (!baseDateStr || earliestJobDate < baseDateStr)) {
+        baseDateStr = earliestJobDate;
       }
     }
   }
 
-  if (!baseDateStr) {
-    baseDateStr = client.createdAt ? client.createdAt.split('T')[0] : '2026-01-01';
+  const createdDate = client.createdAt ? client.createdAt.split('T')[0] : '2026-01-01';
+  if (!baseDateStr || createdDate < baseDateStr) {
+    baseDateStr = createdDate;
   }
 
   // Do not generate recurring jobs for dates strictly before client's start date
@@ -100,7 +102,9 @@ export function isClientRecurringOnDate(
     return false;
   }
 
-  if (client.frequency === 'WEEKLY') {
+  const clientFreq = client.frequency || 'WEEKLY';
+
+  if (clientFreq === 'WEEKLY') {
     return true;
   }
 
@@ -111,7 +115,7 @@ export function isClientRecurringOnDate(
 
   if (diffWeeks < 0) return false;
 
-  switch (client.frequency) {
+  switch (clientFreq) {
     case 'FORTNIGHTLY':
       return diffWeeks % 2 === 0;
     case 'MONTHLY':
@@ -245,7 +249,8 @@ export function getCombinedJobsForDate(
         }
       }
 
-      if (client.frequency === 'WEEKLY') {
+      const clientFreq = client.frequency || 'WEEKLY';
+      if (clientFreq === 'WEEKLY') {
         return getIsoWeekStart(j.date) === targetWeekStart;
       }
       const diffMs = Math.abs(new Date(j.date + 'T00:00:00').getTime() - new Date(targetDateStr + 'T00:00:00').getTime());

@@ -1129,7 +1129,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const client = clients.find((c) => c.id === j.clientId);
       if (client) {
         const jobDay = new Date(j.date + 'T00:00:00').getDay();
-        const clientUpdates: Partial<Client> = { customStartDate: j.date };
+        const clientUpdates: Partial<Client> = {};
+
+        // Only set/move customStartDate if client has no customStartDate or if this job date is earlier
+        if (!client.customStartDate || j.date < client.customStartDate) {
+          clientUpdates.customStartDate = j.date;
+        }
         if (j.frequency) {
           clientUpdates.frequency = j.frequency;
         }
@@ -1143,7 +1148,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           clientUpdates.preferredCleanerId = j.cleanerId;
           clientUpdates.preferredCleanerName = j.cleanerName;
         }
-        updateClient(client.id, clientUpdates);
+        if (Object.keys(clientUpdates).length > 0) {
+          updateClient(client.id, clientUpdates);
+        }
       }
     }
 
@@ -1166,15 +1173,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     if (updatedTargetJob && updatedTargetJob.clientId) {
+      const client = clients.find((c) => c.id === updatedTargetJob!.clientId);
       const clientUpdates: Partial<Client> = {};
       if (updates.cleanerId) {
         clientUpdates.preferredCleanerId = updates.cleanerId;
         clientUpdates.preferredCleanerName = updates.cleanerName;
       }
       if (updates.date) {
-        clientUpdates.customStartDate = updates.date;
+        if (!client?.customStartDate || updates.date < client.customStartDate) {
+          clientUpdates.customStartDate = updates.date;
+        }
         const jobDay = new Date(updates.date + 'T00:00:00').getDay();
-        if (!isNaN(jobDay)) clientUpdates.preferredDayOfWeek = jobDay;
+        if (!isNaN(jobDay) && client?.frequency !== 'CUSTOM_DAYS') {
+          clientUpdates.preferredDayOfWeek = jobDay;
+        }
       }
       if (Object.keys(clientUpdates).length > 0) {
         updateClient(updatedTargetJob.clientId, clientUpdates);

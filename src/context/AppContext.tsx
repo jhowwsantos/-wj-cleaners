@@ -1048,6 +1048,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addClient = (c: Omit<Client, 'id' | 'companyId' | 'createdAt'>) => {
     const newClient: Client = {
       ...c,
+      active: c.active ?? true,
       id: `cli_${Date.now()}`,
       companyId: currentCompanyId,
       createdAt: new Date().toISOString().split('T')[0],

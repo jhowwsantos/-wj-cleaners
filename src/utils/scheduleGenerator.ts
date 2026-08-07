@@ -31,7 +31,7 @@ export function isClientRecurringOnDate(
   targetDateStr: string,
   explicitJobs?: CleaningJob[]
 ): boolean {
-  if (!client.active) return false;
+  if (client.active === false) return false;
 
   const [tY, tM, tD] = targetDateStr.split('-').map(Number);
   const targetDate = new Date(Date.UTC(tY, tM - 1, tD));
@@ -335,6 +335,29 @@ export function getCombinedJobsForMonth(
       result[dateStr] = jobsOnDay;
     }
   }
+
+  // Audit console logging as requested showing recurring projection metrics
+  const activeCompanyClients = companyId ? clients.filter(c => c.companyId === companyId) : clients;
+  activeCompanyClients.forEach((c) => {
+    if (c.active !== false) {
+      const generatedDates: string[] = [];
+      Object.entries(result).forEach(([dateStr, jobsOnDay]) => {
+        if (jobsOnDay.some((j) => j.clientId === c.id)) {
+          generatedDates.push(dateStr);
+        }
+      });
+      if (generatedDates.length > 0) {
+        console.log('[Schedule Generator Audit - Client Analysis]:', {
+          clienteAnalisado: c.name,
+          frequencia: c.frequency || 'WEEKLY',
+          dataInicial: c.customStartDate || c.createdAt || 'N/A',
+          diaDaSemana: c.preferredDayOfWeek ?? 1,
+          quantidadeOcorrenciasGeradas: generatedDates.length,
+          datasGeradas: generatedDates,
+        });
+      }
+    }
+  });
 
   return result;
 }

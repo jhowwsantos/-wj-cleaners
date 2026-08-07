@@ -16,7 +16,7 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
   onClose,
   initialDate,
 }) => {
-  const { clients, users, addJob, language } = useApp();
+  const { clients, users, addJob, updateClient, language } = useApp();
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -123,6 +123,18 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
       recurrenceMode: formData.recurrenceMode,
       occurrences: occurrences
     });
+
+    // If creating a recurring job, ensure client profile has matching frequency, preferred day and start date
+    if (formData.frequency !== 'ONE_OFF') {
+      updateClient(client.id, {
+        frequency: formData.frequency,
+        customStartDate: formData.date,
+        preferredDayOfWeek: getDayVal,
+        customIntervalDays: formData.frequency === 'CUSTOM_DAYS' ? Number(formData.customIntervalDays) : client.customIntervalDays,
+        customEndDate: formData.customEndDate.trim() || client.customEndDate,
+        active: true,
+      });
+    }
 
     for (let i = 0; i < occurrences; i++) {
       const targetUtcDate = new Date(Date.UTC(year, month - 1, day + i * intervalDays));

@@ -27,6 +27,7 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({
     street: editingClient?.street || '',
     county: editingClient?.county || 'Surrey',
     country: editingClient?.country || 'United Kingdom',
+    active: editingClient?.active ?? true,
     latitude: editingClient?.latitude || 51.3524,
     longitude: editingClient?.longitude || -0.2721,
     phone: editingClient?.phone || '+44 7700 900000',

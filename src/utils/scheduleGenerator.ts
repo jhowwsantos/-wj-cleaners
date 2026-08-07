@@ -84,8 +84,8 @@ export function isClientRecurringOnDate(
   // Determine the base reference date anchor for start bounds and cycle calculation
   let baseDateStr = client.customStartDate;
 
-  // Check explicitJobs for the earliest explicit job date to anchor baseDateStr
-  if (explicitJobs && explicitJobs.length > 0) {
+  // Check explicitJobs for the earliest explicit job date to anchor baseDateStr if customStartDate is not defined
+  if (!baseDateStr && explicitJobs && explicitJobs.length > 0) {
     const clientJobs = explicitJobs.filter(
       (j) => j.clientId === client.id && !(j as any).isDeleted && (j.status as string) !== 'DELETED'
     );
@@ -94,16 +94,12 @@ export function isClientRecurringOnDate(
         .filter((j) => new Date(j.date + 'T00:00:00').getDay() === preferredDay)
         .map((j) => j.date)
         .sort();
-      const earliestJobDate = datesOnPreferredDay[0] || clientJobs.map((j) => j.date).sort()[0];
-      if (earliestJobDate && (!baseDateStr || earliestJobDate < baseDateStr)) {
-        baseDateStr = earliestJobDate;
-      }
+      baseDateStr = datesOnPreferredDay[0] || clientJobs.map((j) => j.date).sort()[0];
     }
   }
 
-  const createdDate = client.createdAt ? client.createdAt.split('T')[0] : '2026-01-01';
-  if (!baseDateStr || createdDate < baseDateStr) {
-    baseDateStr = createdDate;
+  if (!baseDateStr) {
+    baseDateStr = client.createdAt ? client.createdAt.split('T')[0] : '2026-01-01';
   }
 
   // Do not generate recurring jobs for dates strictly before client's start date

@@ -1164,38 +1164,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setJobs((prev) => [newJob, ...prev]);
     setDoc(doc(db, 'jobs', newJob.id), sanitizeFirestoreData(newJob)).catch(() => {});
 
-    if (j.clientId && j.date) {
-      const client = clients.find((c) => c.id === j.clientId);
-      if (client) {
-        const jobDay = new Date(j.date + 'T00:00:00').getDay();
-        const clientUpdates: Partial<Client> = {};
-
-        // Only set/move customStartDate if client has no customStartDate or if this job date is earlier
-        if (!client.customStartDate || j.date < client.customStartDate) {
-          clientUpdates.customStartDate = j.date;
-        }
-        if (j.frequency) {
-          clientUpdates.frequency = j.frequency;
-        }
-        if (j.customIntervalDays) {
-          clientUpdates.customIntervalDays = j.customIntervalDays;
-        }
-        if (j.customEndDate !== undefined) {
-          clientUpdates.customEndDate = j.customEndDate;
-        }
-        if (client.frequency !== 'CUSTOM_DAYS' && !isNaN(jobDay)) {
-          clientUpdates.preferredDayOfWeek = jobDay;
-        }
-        if (j.cleanerId) {
-          clientUpdates.preferredCleanerId = j.cleanerId;
-          clientUpdates.preferredCleanerName = j.cleanerName;
-        }
-        if (Object.keys(clientUpdates).length > 0) {
-          updateClient(client.id, clientUpdates);
-        }
-      }
-    }
-
     addNotification('Cleaning Scheduled', `Scheduled for ${newJob.clientName} on ${newJob.date}`, 'SUCCESS');
   };
 
@@ -1213,27 +1181,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDoc(doc(db, 'jobs', id), sanitizeFirestoreData(updates), { merge: true }).catch((err) => {
       console.warn('Error syncing job update to Firestore:', err);
     });
-
-    if (updatedTargetJob && updatedTargetJob.clientId) {
-      const client = clients.find((c) => c.id === updatedTargetJob!.clientId);
-      const clientUpdates: Partial<Client> = {};
-      if (updates.cleanerId) {
-        clientUpdates.preferredCleanerId = updates.cleanerId;
-        clientUpdates.preferredCleanerName = updates.cleanerName;
-      }
-      if (updates.date) {
-        if (!client?.customStartDate || updates.date < client.customStartDate) {
-          clientUpdates.customStartDate = updates.date;
-        }
-        const jobDay = new Date(updates.date + 'T00:00:00').getDay();
-        if (!isNaN(jobDay) && client?.frequency !== 'CUSTOM_DAYS') {
-          clientUpdates.preferredDayOfWeek = jobDay;
-        }
-      }
-      if (Object.keys(clientUpdates).length > 0) {
-        updateClient(updatedTargetJob.clientId, clientUpdates);
-      }
-    }
   };
 
   const updateJobStatus = (id: string, status: CleaningJob['status']) => {

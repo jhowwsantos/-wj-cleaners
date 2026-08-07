@@ -1,27 +1,25 @@
 import { Client, CleaningJob } from '../types';
 
 function getIsoWeekStart(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
-  if (isNaN(d.getTime())) return dateStr;
-  const day = d.getDay();
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const utcDate = new Date(Date.UTC(y, m - 1, d));
+  if (isNaN(utcDate.getTime())) return dateStr;
+  const day = utcDate.getUTCDay();
   const diffToMon = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diffToMon);
-  return d.toISOString().split('T')[0];
+  utcDate.setUTCDate(utcDate.getUTCDate() + diffToMon);
+  return utcDate.toISOString().split('T')[0];
 }
 
 /**
  * Helper to get the first date matching preferredDayOfWeek on or after baseDate
  */
 function getFirstOccurrence(createdAtStr: string, preferredDayOfWeek: number): Date {
-  const base = new Date(createdAtStr + 'T00:00:00');
-  if (isNaN(base.getTime())) {
-    const fallback = new Date('2026-01-01T00:00:00');
-    return getFirstOccurrence('2026-01-01', preferredDayOfWeek);
-  }
-  const currentDay = base.getDay();
+  const [y, m, d] = createdAtStr.split('-').map(Number);
+  const base = new Date(Date.UTC(y || 2026, (m || 1) - 1, d || 1));
+  const currentDay = base.getUTCDay();
   let diff = preferredDayOfWeek - currentDay;
   if (diff < 0) diff += 7;
-  base.setDate(base.getDate() + diff);
+  base.setUTCDate(base.getUTCDate() + diff);
   return base;
 }
 
@@ -35,7 +33,8 @@ export function isClientRecurringOnDate(
 ): boolean {
   if (!client.active) return false;
 
-  const targetDate = new Date(targetDateStr + 'T00:00:00');
+  const [tY, tM, tD] = targetDateStr.split('-').map(Number);
+  const targetDate = new Date(Date.UTC(tY, tM - 1, tD));
   if (isNaN(targetDate.getTime())) return false;
 
   // Do not generate recurring jobs after client's end date (if defined)
@@ -53,7 +52,9 @@ export function isClientRecurringOnDate(
       );
       if (clientJobs.length > 0) {
         const sortedDates = clientJobs.map((j) => j.date).sort();
-        baseDateStr = sortedDates[0];
+        if (!baseDateStr || sortedDates[0] < baseDateStr) {
+          baseDateStr = sortedDates[0];
+        }
       }
     }
 
@@ -65,10 +66,8 @@ export function isClientRecurringOnDate(
       return false;
     }
 
-    let baseDate = new Date(baseDateStr + 'T00:00:00');
-    if (isNaN(baseDate.getTime())) {
-      baseDate = new Date('2026-01-01T00:00:00');
-    }
+    const [bY, bM, bD] = baseDateStr.split('-').map(Number);
+    const baseDate = new Date(Date.UTC(bY, bM - 1, bD));
 
     const diffMs = targetDate.getTime() - baseDate.getTime();
     const diffDays = Math.round(diffMs / (24 * 60 * 60 * 1000));
@@ -76,7 +75,7 @@ export function isClientRecurringOnDate(
     return Math.abs(diffDays) % customDays === 0;
   }
 
-  const targetDayOfWeek = targetDate.getDay();
+  const targetDayOfWeek = targetDate.getUTCDay();
   const preferredDay = client.preferredDayOfWeek ?? 1;
 
   if (targetDayOfWeek !== preferredDay) return false;
@@ -85,16 +84,22 @@ export function isClientRecurringOnDate(
   let baseDateStr = client.customStartDate;
 
   // Check explicitJobs for the earliest explicit job date to anchor baseDateStr if customStartDate is not defined
-  if (!baseDateStr && explicitJobs && explicitJobs.length > 0) {
+  if (explicitJobs && explicitJobs.length > 0) {
     const clientJobs = explicitJobs.filter(
       (j) => j.clientId === client.id && !(j as any).isDeleted && (j.status as string) !== 'DELETED'
     );
     if (clientJobs.length > 0) {
       const datesOnPreferredDay = clientJobs
-        .filter((j) => new Date(j.date + 'T00:00:00').getDay() === preferredDay)
+        .filter((j) => {
+          const [jY, jM, jD] = j.date.split('-').map(Number);
+          return new Date(Date.UTC(jY, jM - 1, jD)).getUTCDay() === preferredDay;
+        })
         .map((j) => j.date)
         .sort();
-      baseDateStr = datesOnPreferredDay[0] || clientJobs.map((j) => j.date).sort()[0];
+      const earliestJobDate = datesOnPreferredDay[0] || clientJobs.map((j) => j.date).sort()[0];
+      if (!baseDateStr || (earliestJobDate && earliestJobDate < baseDateStr)) {
+        baseDateStr = earliestJobDate;
+      }
     }
   }
 
@@ -175,7 +180,8 @@ export function getCombinedJobsForDate(
         client.preferredDayOfWeek !== undefined &&
         client.preferredDayOfWeek !== null
       ) {
-        const jobDayOfWeek = new Date(j.date + 'T00:00:00').getDay();
+        const [jY, jM, jD] = j.date.split('-').map(Number);
+        const jobDayOfWeek = new Date(Date.UTC(jY, jM - 1, jD)).getUTCDay();
         // If job falls on a day different from client's preferred day and was not manually rescheduled, exclude it
         if (jobDayOfWeek !== client.preferredDayOfWeek && !j.isRescheduled) {
           return false;
@@ -248,7 +254,8 @@ export function getCombinedJobsForDate(
         client.preferredDayOfWeek !== undefined &&
         client.preferredDayOfWeek !== null
       ) {
-        const jobDayOfWeek = new Date(j.date + 'T00:00:00').getDay();
+        const [jY, jM, jD] = j.date.split('-').map(Number);
+        const jobDayOfWeek = new Date(Date.UTC(jY, jM - 1, jD)).getUTCDay();
         if (jobDayOfWeek !== client.preferredDayOfWeek && !j.isRescheduled) {
           return false;
         }
@@ -258,7 +265,9 @@ export function getCombinedJobsForDate(
       if (clientFreq === 'WEEKLY') {
         return getIsoWeekStart(j.date) === targetWeekStart;
       }
-      const diffMs = Math.abs(new Date(j.date + 'T00:00:00').getTime() - new Date(targetDateStr + 'T00:00:00').getTime());
+      const [jY, jM, jD] = j.date.split('-').map(Number);
+      const [tY, tM, tD] = targetDateStr.split('-').map(Number);
+      const diffMs = Math.abs(new Date(Date.UTC(jY, jM - 1, jD)).getTime() - new Date(Date.UTC(tY, tM - 1, tD)).getTime());
       const diffDays = diffMs / (24 * 60 * 60 * 1000);
       return diffDays <= 5;
     });

@@ -103,11 +103,30 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
     if (formData.frequency === 'MONTHLY') intervalDays = 28;
     if (formData.frequency === 'CUSTOM_DAYS') intervalDays = Math.max(1, Number(formData.customIntervalDays) || 20);
 
-    const baseDate = new Date(formData.date + 'T00:00:00');
+    const [year, month, day] = formData.date.split('-').map(Number);
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const localDateObj = new Date(year, month - 1, day);
+    const getDayVal = localDateObj.getDay();
+    const getUTCDayVal = localDateObj.getUTCDay();
+
+    // Audit console logging as requested before saving the job
+    console.log('[Job Creation Audit]:', {
+      preferredDayOfWeek: client.preferredDayOfWeek,
+      customStartDate: client.customStartDate,
+      formDateChosen: formData.date,
+      dateToSave: formData.date,
+      dayOfWeekCalculated: getDayVal,
+      timezoneUsed: tz,
+      getDayResult: getDayVal,
+      getUTCDayResult: getUTCDayVal,
+      frequency: formData.frequency,
+      recurrenceMode: formData.recurrenceMode,
+      occurrences: occurrences
+    });
 
     for (let i = 0; i < occurrences; i++) {
-      const targetDate = new Date(baseDate.getTime() + i * intervalDays * 86400000);
-      const dateStr = targetDate.toISOString().split('T')[0];
+      const targetUtcDate = new Date(Date.UTC(year, month - 1, day + i * intervalDays));
+      const dateStr = targetUtcDate.toISOString().split('T')[0];
 
       addJob({
         clientId: client.id,

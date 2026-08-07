@@ -1098,18 +1098,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteClient = (id: string) => {
-    setClients((prev) => prev.filter((c) => c.id !== id));
-    setJobs((prev) => prev.filter((j) => j.clientId !== id));
-    deleteDoc(doc(db, 'clients', id)).catch(() => {});
+    const targetClient = clients.find((c) => c.id === id);
 
-    // Delete associated jobs from Firestore
+    setClients((prev) => prev.filter((c) => c.id !== id));
+    setJobs((prev) =>
+      prev.filter(
+        (j) =>
+          j.clientId !== id &&
+          !j.id.includes(id) &&
+          (!targetClient || j.clientName?.trim().toLowerCase() !== targetClient.name.trim().toLowerCase())
+      )
+    );
+
+    deleteDoc(doc(db, 'clients', id)).catch((err) => {
+      console.warn('Error deleting client doc from Firestore:', err);
+    });
+
+    // Delete associated jobs from Firestore (in-memory state)
     jobs.forEach((j) => {
-      if (j.clientId === id || j.id.includes(id)) {
+      if (
+        j.clientId === id ||
+        j.id.includes(id) ||
+        (targetClient && j.clientName?.trim().toLowerCase() === targetClient.name.trim().toLowerCase())
+      ) {
         if (!j.id.startsWith('virt_')) {
           deleteDoc(doc(db, 'jobs', j.id)).catch(() => {});
         }
       }
     });
+
+    // Query Firestore collection directly to delete all stored jobs and tombstone records linked to this client
+    getDocs(collection(db, 'jobs'))
+      .then((snapshot) => {
+        snapshot.docs.forEach((d) => {
+          const data = d.data();
+          const isMatching =
+            data?.clientId === id ||
+            d.id.includes(id) ||
+            (targetClient &&
+              data?.clientName &&
+              data.clientName.trim().toLowerCase() === targetClient.name.trim().toLowerCase());
+
+          if (isMatching) {
+            deleteDoc(doc(db, 'jobs', d.id)).catch((err) => {
+              console.warn('Error deleting job document for deleted client:', err);
+            });
+          }
+        });
+      })
+      .catch((err) => {
+        console.warn('Error querying jobs collection during client deletion:', err);
+      });
 
     addNotification('Cliente Removido', 'Cliente e agendamentos associados foram removidos com sucesso.', 'WARNING');
   };

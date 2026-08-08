@@ -21,7 +21,11 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
   const todayStr = new Date().toISOString().split('T')[0];
 
   const [formData, setFormData] = useState({
-    clientId: clients[0]?.id || '',
+    clientId: clients[0]?.id || 'GUEST_CLIENT',
+    customClientName: '',
+    customAddress: '',
+    customPostcode: '',
+    customPhone: '',
     date: initialDate || todayStr,
     startTime: '09:00',
     estimatedDuration: clients[0]?.estimatedDuration || 3,
@@ -42,7 +46,7 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
 
   // Sync initial clientId and values when modal opens or clients load
   useEffect(() => {
-    if (clients.length > 0 && !formData.clientId) {
+    if (clients.length > 0 && (!formData.clientId || formData.clientId === 'GUEST_CLIENT')) {
       const first = clients[0];
       setFormData((prev) => ({
         ...prev,
@@ -65,6 +69,17 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
   if (!isOpen) return null;
 
   const handleClientChange = (cId: string) => {
+    if (cId === 'GUEST_CLIENT') {
+      setFormData((prev) => ({
+        ...prev,
+        clientId: 'GUEST_CLIENT',
+        frequency: 'ONE_OFF',
+        price: 45,
+        estimatedDuration: 3,
+      }));
+      return;
+    }
+
     const client = clients.find((c) => c.id === cId);
     if (client) {
       setFormData((prev) => ({
@@ -86,12 +101,23 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const client = clients.find((c) => c.id === formData.clientId);
-    if (!client) return;
+    const isGuest = formData.clientId === 'GUEST_CLIENT';
+    const client = isGuest ? null : clients.find((c) => c.id === formData.clientId);
+    if (!isGuest && !client) return;
 
     const assignedUsers = users.filter((u) => selectedCleanerIds.includes(u.id));
     const cleanerIdStr = selectedCleanerIds.join(', ');
     const cleanerNameStr = assignedUsers.map((u) => u.name).join(', ') || 'Nenhum';
+
+    const clientName = isGuest
+      ? (formData.customClientName.trim() || (language === 'pt' ? 'Cliente Avulso' : 'Guest Client'))
+      : client!.name;
+    const address = isGuest ? (formData.customAddress.trim() || 'London') : client!.address;
+    const postcode = isGuest ? (formData.customPostcode.trim() || 'SW1') : client!.postcode;
+    const city = isGuest ? 'London' : client!.city;
+    const phone = isGuest ? formData.customPhone.trim() : client!.phone;
+    const whatsapp = isGuest ? formData.customPhone.trim() : client!.whatsapp;
+    const guestClientId = isGuest ? `guest_${Date.now()}` : client!.id;
 
     const isAutoIndefinite = formData.frequency !== 'ONE_OFF' && formData.recurrenceMode === 'AUTO_INDEFINITE';
     const occurrences = (formData.frequency === 'ONE_OFF' || isAutoIndefinite)
@@ -111,8 +137,8 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
 
     // Audit console logging as requested before saving the job
     console.log('[Job Creation Audit]:', {
-      preferredDayOfWeek: client.preferredDayOfWeek,
-      customStartDate: client.customStartDate,
+      preferredDayOfWeek: client?.preferredDayOfWeek,
+      customStartDate: client?.customStartDate,
       formDateChosen: formData.date,
       dateToSave: formData.date,
       dayOfWeekCalculated: getDayVal,
@@ -124,8 +150,8 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
       occurrences: occurrences
     });
 
-    // If creating a recurring job, ensure client profile has matching frequency, preferred day and start date
-    if (formData.frequency !== 'ONE_OFF') {
+    // If creating a recurring job for an existing registered client, ensure client profile matches
+    if (!isGuest && client && formData.frequency !== 'ONE_OFF') {
       updateClient(client.id, {
         frequency: formData.frequency,
         customStartDate: formData.date,
@@ -141,13 +167,13 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
       const dateStr = targetUtcDate.toISOString().split('T')[0];
 
       addJob({
-        clientId: client.id,
-        clientName: client.name,
-        address: client.address,
-        postcode: client.postcode,
-        city: client.city,
-        phone: client.phone,
-        whatsapp: client.whatsapp,
+        clientId: guestClientId,
+        clientName: clientName,
+        address: address,
+        postcode: postcode,
+        city: city,
+        phone: phone,
+        whatsapp: whatsapp,
         cleanerId: cleanerIdStr,
         cleanerName: cleanerNameStr,
         date: dateStr,
@@ -157,14 +183,15 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
         status: 'SCHEDULED',
         paymentStatus: 'PENDING',
         notes: formData.notes,
-        keyDetails: client.keyDetails,
-        alarmCode: client.alarmCode,
-        hasPets: client.hasPets,
-        petNotes: client.petNotes,
-        frequency: formData.frequency,
-        customIntervalDays: formData.frequency === 'CUSTOM_DAYS' ? Number(formData.customIntervalDays) : undefined,
+        keyDetails: client?.keyDetails || '',
+        alarmCode: client?.alarmCode || '',
+        hasPets: client?.hasPets || false,
+        petNotes: client?.petNotes || '',
+        frequency: isGuest ? 'ONE_OFF' : formData.frequency,
+        customIntervalDays: (!isGuest && formData.frequency === 'CUSTOM_DAYS') ? Number(formData.customIntervalDays) : undefined,
         customStartDate: formData.date,
-        customEndDate: formData.customEndDate.trim() || undefined,
+        customEndDate: (!isGuest && formData.customEndDate.trim()) || undefined,
+        isRescheduled: true,
       });
     }
 
@@ -204,23 +231,64 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
               {getTranslation(language, 'selectClient')} *
             </label>
-            {clients.length === 0 ? (
-              <p className="text-xs text-amber-600 mt-1 font-semibold">
-                {language === 'pt' ? 'Nenhum cliente cadastrado ainda. Cadastre um cliente primeiro!' : 'No clients registered yet. Please add a client first!'}
-              </p>
-            ) : (
-              <select
-                required
-                value={formData.clientId}
-                onChange={(e) => handleClientChange(e.target.value)}
-                className="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} - {c.postcode} (£{c.defaultPrice})
-                  </option>
-                ))}
-              </select>
+            <select
+              required
+              value={formData.clientId}
+              onChange={(e) => handleClientChange(e.target.value)}
+              className="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="GUEST_CLIENT" className="font-bold text-blue-600 dark:text-blue-400">
+                ⚡ {language === 'pt' ? 'Agendamento Avulso (Cliente Não Cadastrado)' : 'Guest / One-Off Client (Not Registered)'}
+              </option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} - {c.postcode} (£{c.defaultPrice})
+                </option>
+              ))}
+            </select>
+
+            {formData.clientId === 'GUEST_CLIENT' && (
+              <div className="mt-3 p-3 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl space-y-2.5">
+                <div>
+                  <label className="text-[11px] font-bold text-blue-900 dark:text-blue-200 block mb-1">
+                    {language === 'pt' ? 'Nome do Cliente Avulso *' : 'Guest Client Name *'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.customClientName}
+                    onChange={(e) => setFormData({ ...formData, customClientName: e.target.value })}
+                    placeholder={language === 'pt' ? 'Ex: Sâmia (Limpeza Extra / Avulsa)' : 'Ex: Guest Client'}
+                    className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      {language === 'pt' ? 'Endereço / Local' : 'Address'}
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.customAddress}
+                      onChange={(e) => setFormData({ ...formData, customAddress: e.target.value })}
+                      placeholder="Ex: 123 High Street"
+                      className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-900 dark:text-white outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Postcode / Tel
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.customPostcode}
+                      onChange={(e) => setFormData({ ...formData, customPostcode: e.target.value })}
+                      placeholder="Ex: SW1A 1AA"
+                      className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-900 dark:text-white outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 

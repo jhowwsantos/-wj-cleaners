@@ -182,8 +182,8 @@ export function getCombinedJobsForDate(
       ) {
         const [jY, jM, jD] = j.date.split('-').map(Number);
         const jobDayOfWeek = new Date(Date.UTC(jY, jM - 1, jD)).getUTCDay();
-        // If job falls on a day different from client's preferred day and was not manually rescheduled, exclude it
-        if (jobDayOfWeek !== client.preferredDayOfWeek && !j.isRescheduled) {
+        // If job falls on a day different from client's preferred day and was not manually rescheduled or a one-off job, exclude it
+        if (jobDayOfWeek !== client.preferredDayOfWeek && !j.isRescheduled && j.frequency !== 'ONE_OFF') {
           return false;
         }
       }

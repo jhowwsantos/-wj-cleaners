@@ -553,18 +553,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     );
 
-    // 2. Jobs listener
+    // 2. Jobs listener with automatic deduplication
     const unsubJobs = onSnapshot(
       collection(db, 'jobs'),
       (snapshot) => {
         if (snapshot.empty) {
           setJobs([]);
         } else {
-          const validJobsMap = new Map<string, CleaningJob>();
+          const processedJobsMap = new Map<string, CleaningJob>();
+          const duplicatesToDelete: string[] = [];
+
+          // Group jobs by deduplication key (clientId/clientName + date + startTime)
+          const groupedJobs = new Map<string, { docId: string; job: CleaningJob }[]>();
 
           snapshot.docs.forEach((d) => {
             const data = d.data() as CleaningJob;
             if (!data) return;
+
             // Delete legacy initial template mock jobs from Firestore
             if (
               d.id.startsWith('job_today_') ||
@@ -587,10 +592,60 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }
 
             const docKey = jobToUse.id || d.id;
-            validJobsMap.set(docKey, { ...jobToUse, id: docKey });
+            const fullJob = { ...jobToUse, id: docKey };
+
+            // Determine if special or standard job key
+            const isSpecial = fullJob.id === 'global_schedule_clear' || fullJob.id.startsWith('del_') || fullJob.isDeleted;
+            const clientKey = (fullJob.clientId || fullJob.clientName || 'unknown').trim().toLowerCase();
+            const groupKey = isSpecial
+              ? `special_${fullJob.id}`
+              : `${clientKey}___${fullJob.date}___${fullJob.startTime || '09:00'}`;
+
+            if (!groupedJobs.has(groupKey)) {
+              groupedJobs.set(groupKey, []);
+            }
+            groupedJobs.get(groupKey)!.push({ docId: d.id, job: fullJob });
           });
 
-          setJobs(Array.from(validJobsMap.values()));
+          // Resolve each group and pick the single best job doc, marking extras for Firestore deletion
+          groupedJobs.forEach((items, key) => {
+            if (items.length === 1) {
+              processedJobsMap.set(items[0].job.id, items[0].job);
+            } else {
+              items.sort((a, b) => {
+                const scoreA =
+                  (a.job.status === 'COMPLETED' ? 10 : a.job.status === 'IN_PROGRESS' ? 5 : 0) +
+                  (a.job.photos?.length ? 2 : 0) +
+                  (a.job.clientSignature ? 2 : 0) +
+                  (a.job.checkInTime ? 1 : 0);
+                const scoreB =
+                  (b.job.status === 'COMPLETED' ? 10 : b.job.status === 'IN_PROGRESS' ? 5 : 0) +
+                  (b.job.photos?.length ? 2 : 0) +
+                  (b.job.clientSignature ? 2 : 0) +
+                  (b.job.checkInTime ? 1 : 0);
+                if (scoreB !== scoreA) return scoreB - scoreA;
+                return b.docId.localeCompare(a.docId);
+              });
+
+              // Keep best job
+              processedJobsMap.set(items[0].job.id, items[0].job);
+
+              // Delete redundant duplicate job documents from Firestore
+              for (let i = 1; i < items.length; i++) {
+                duplicatesToDelete.push(items[i].docId);
+              }
+            }
+          });
+
+          // Perform Firestore cleanup for duplicate job documents
+          duplicatesToDelete.forEach((dupId) => {
+            console.log('[Schedule Deduplication] Purging duplicate Firestore job document:', dupId);
+            deleteDoc(doc(db, 'jobs', dupId)).catch((err) => {
+              console.warn('Error purging duplicate job from Firestore:', err);
+            });
+          });
+
+          setJobs(Array.from(processedJobsMap.values()));
         }
       },
       (err) => {

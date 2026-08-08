@@ -194,7 +194,7 @@ export function getCombinedJobsForDate(
 
   // Always enrich explicit jobs with official client details if client exists
   // For any job on a past date, ensure status is 'COMPLETED'
-  const jobsForDate = rawJobsForDate.map((j) => {
+  const enrichedJobsForDate = rawJobsForDate.map((j) => {
     let enriched = { ...j };
     if (j.clientId && clientMap.has(j.clientId)) {
       const client = clientMap.get(j.clientId)!;
@@ -220,10 +220,42 @@ export function getCombinedJobsForDate(
     return enriched;
   });
 
+  // Deduplicate explicit jobs on targetDateStr by client + startTime to prevent double entries
+  const uniqueJobsMap = new Map<string, CleaningJob>();
+  enrichedJobsForDate.forEach((j) => {
+    const clientKey = j.clientId || (j.clientName ? j.clientName.trim().toLowerCase() : 'unknown');
+    const timeKey = j.startTime || '09:00';
+    const key = `${clientKey}___${timeKey}`;
+
+    if (!uniqueJobsMap.has(key)) {
+      uniqueJobsMap.set(key, j);
+    } else {
+      const existing = uniqueJobsMap.get(key)!;
+      // Prefer job with completed/in-progress status or photos/signatures over a scheduled placeholder
+      const isBetter =
+        (j.status === 'COMPLETED' || j.status === 'IN_PROGRESS') &&
+        existing.status !== 'COMPLETED' &&
+        existing.status !== 'IN_PROGRESS';
+      if (isBetter) {
+        uniqueJobsMap.set(key, j);
+      }
+    }
+  });
+
+  const jobsForDate = Array.from(uniqueJobsMap.values());
+
   const existingClientIds = new Set(
     explicitJobs
       .filter((j) => j.date === targetDateStr || j.id === `del_${j.clientId}_${targetDateStr}`)
       .map((j) => j.clientId)
+      .filter(Boolean)
+  );
+
+  const existingClientNames = new Set(
+    explicitJobs
+      .filter((j) => j.date === targetDateStr || j.id.includes(targetDateStr))
+      .map((j) => (j.clientName || '').trim().toLowerCase())
+      .filter(Boolean)
   );
 
   const companyClients = companyId
@@ -235,7 +267,12 @@ export function getCombinedJobsForDate(
   const targetWeekStart = getIsoWeekStart(targetDateStr);
 
   companyClients.forEach((client) => {
-    if (existingClientIds.has(client.id)) return;
+    if (
+      existingClientIds.has(client.id) ||
+      existingClientNames.has((client.name || '').trim().toLowerCase())
+    ) {
+      return;
+    }
 
     // Prevent duplicate virtual job if client already has an explicit job in this week/cycle (e.g. moved from Sunday to Monday)
     const hasExplicitJobInCycle = explicitJobs.some((j) => {

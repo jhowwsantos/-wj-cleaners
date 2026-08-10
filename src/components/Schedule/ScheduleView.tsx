@@ -66,6 +66,7 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
   const {
     jobs,
     clients,
+    recurrenceSeries,
     updateClient,
     users,
     expenses,
@@ -137,7 +138,8 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
       clients,
       currentYear,
       currentMonth,
-      currentCompany.id
+      currentCompany.id,
+      recurrenceSeries
     );
 
     const map: Record<string, CleaningJob[]> = {};
@@ -145,7 +147,7 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
       map[dateKey] = rawMap[dateKey] || [];
     });
     return map;
-  }, [jobs, clients, currentYear, currentMonth, currentCompany.id]);
+  }, [jobs, clients, currentYear, currentMonth, currentCompany.id, recurrenceSeries]);
 
   // Selected date jobs (memoized)
   const rawSelectedDateJobs = useMemo(() => {
@@ -153,9 +155,10 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
       jobs,
       clients,
       selectedDate,
-      currentCompany.id
+      currentCompany.id,
+      recurrenceSeries
     );
-  }, [jobs, clients, selectedDate, currentCompany.id]);
+  }, [jobs, clients, selectedDate, currentCompany.id, recurrenceSeries]);
 
   // Unified filter function supporting Search (Name, Address, Phone) & Filters (Cleaner, Status)
   const filterJobs = useCallback(
@@ -251,10 +254,10 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
   // Period jobs collection for the selected metrics period (Hoje, Esta Semana, Este Mês, Personalizado)
   const periodJobs = useMemo(() => {
     if (metricsPeriod === 'TODAY') {
-      return getCombinedJobsForDate(jobs, clients, selectedDate, currentCompany.id);
+      return getCombinedJobsForDate(jobs, clients, selectedDate, currentCompany.id, recurrenceSeries);
     } else if (metricsPeriod === 'WEEK') {
       return weekDays.flatMap((d) =>
-        getCombinedJobsForDate(jobs, clients, d.dateStr, currentCompany.id)
+        getCombinedJobsForDate(jobs, clients, d.dateStr, currentCompany.id, recurrenceSeries)
       );
     } else if (metricsPeriod === 'MONTH') {
       return Object.values(monthJobsMap).flat();
@@ -268,7 +271,7 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
       while (curr <= end && safety < 366) {
         safety++;
         const dateStr = curr.toISOString().split('T')[0];
-        accumulatedJobs.push(...getCombinedJobsForDate(jobs, clients, dateStr, currentCompany.id));
+        accumulatedJobs.push(...getCombinedJobsForDate(jobs, clients, dateStr, currentCompany.id, recurrenceSeries));
         curr.setDate(curr.getDate() + 1);
       }
       return accumulatedJobs;
@@ -284,6 +287,7 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
     jobs,
     clients,
     currentCompany.id,
+    recurrenceSeries,
   ]);
 
   // Target collaborator for individual metrics (ADMIN / CLEANER or filtered cleaner)
@@ -2323,7 +2327,7 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
           <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-700 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 my-auto">
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
               <h3 className="font-extrabold text-base text-rose-600 dark:text-rose-400 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" /> Confirmar Exclusão
+                <AlertTriangle className="w-5 h-5" /> Opções de Remoção de Agendamento
               </h3>
               <button onClick={() => setDeleteConfirmJob(null)} className="p-1 text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
@@ -2332,30 +2336,51 @@ const ScheduleViewComponent: React.FC<ScheduleViewProps> = ({
 
             <div className="space-y-2">
               <p className="text-sm font-bold text-slate-900 dark:text-white">
-                Tem certeza que deseja excluir este agendamento?
+                Como deseja proceder com a remoção para <span className="text-indigo-600 dark:text-indigo-400">{deleteConfirmJob.clientName}</span>?
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                O serviço para <strong className="text-slate-800 dark:text-slate-200">{deleteConfirmJob.clientName}</strong> no dia <strong className="text-slate-800 dark:text-slate-200">{deleteConfirmJob.date}</strong> será permanentemente removido do banco de dados e da agenda.
+                Data selecionada: <strong className="text-slate-800 dark:text-slate-200">{deleteConfirmJob.date}</strong>
               </p>
             </div>
 
-            <div className="pt-3 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-700">
+            <div className="space-y-2.5 pt-1">
+              <button
+                onClick={() => {
+                  deleteJob(deleteConfirmJob.id, deleteConfirmJob, 'SINGLE');
+                  setDeleteConfirmJob(null);
+                }}
+                className="w-full text-left p-3.5 bg-slate-50 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 rounded-2xl transition-all group"
+              >
+                <div className="font-extrabold text-xs text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                  Apenas este agendamento ({deleteConfirmJob.date})
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Remove somente a limpeza neste dia específico. As demais datas da série permanecem ativas.
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  deleteJob(deleteConfirmJob.id, deleteConfirmJob, 'THIS_AND_FUTURE');
+                  setDeleteConfirmJob(null);
+                }}
+                className="w-full text-left p-3.5 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 rounded-2xl transition-all group"
+              >
+                <div className="font-extrabold text-xs text-rose-700 dark:text-rose-300">
+                  Este e todos os agendamentos futuros
+                </div>
+                <div className="text-[11px] text-rose-600/80 dark:text-rose-400/80">
+                  Cancela a série recorrente a partir desta data. O histórico passado é preservado e o perfil do cliente não é alterado.
+                </div>
+              </button>
+            </div>
+
+            <div className="pt-3 flex justify-end border-t border-slate-100 dark:border-slate-700">
               <button
                 onClick={() => setDeleteConfirmJob(null)}
                 className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl"
               >
                 Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  if (deleteConfirmJob) {
-                    deleteJob(deleteConfirmJob.id, deleteConfirmJob);
-                  }
-                  setDeleteConfirmJob(null);
-                }}
-                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold rounded-xl shadow-md shadow-rose-500/20"
-              >
-                Sim, Excluir Agendamento
               </button>
             </div>
           </div>

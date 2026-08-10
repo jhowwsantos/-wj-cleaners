@@ -136,6 +136,29 @@ export interface CleaningJob {
   isRescheduled?: boolean;
   createdAt?: string;
   isCleared?: boolean;
+  recurrenceSeriesId?: string;
+}
+
+export type RecurrenceStatus = 'ACTIVE' | 'CANCELLED';
+
+export interface RecurrenceSeries {
+  id: string;
+  companyId: string;
+  clientId: string;
+  clientName: string;
+  startDate: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD optional
+  frequency: CleaningFrequency; // WEEKLY, FORTNIGHTLY, MONTHLY, ONE_OFF
+  weekday?: number; // 0=Sunday, 1=Monday ... 6=Saturday
+  time: string; // e.g. "09:00"
+  cleanerId?: string;
+  cleanerName?: string;
+  estimatedDuration?: number;
+  price?: number;
+  status: RecurrenceStatus;
+  cancelledAtDate?: string; // YYYY-MM-DD cutoff date from which series was cancelled
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export type ExpenseCategory =

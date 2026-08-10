@@ -31,6 +31,7 @@ import {
   ThemeMode,
   PhotoRecord,
   PayrollPayment,
+  RecurrenceSeries,
 } from '../types';
 import {
   INITIAL_COMPANIES,
@@ -84,6 +85,10 @@ interface AppContextType {
 
   // Agenda / Jobs
   jobs: CleaningJob[];
+  recurrenceSeries: RecurrenceSeries[];
+  addRecurrenceSeries: (series: Omit<RecurrenceSeries, 'id' | 'companyId' | 'createdAt'>) => string;
+  cancelRecurrenceSeries: (seriesId: string, cutoffDate?: string) => void;
+  updateRecurrenceSeries: (seriesId: string, updates: Partial<RecurrenceSeries>) => void;
   addJob: (job: Omit<CleaningJob, 'id' | 'companyId'>) => void;
   updateJob: (id: string, updates: Partial<CleaningJob>) => void;
   updateJobStatus: (id: string, status: CleaningJob['status']) => void;
@@ -322,6 +327,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     return INITIAL_JOBS;
   });
+
+  const [recurrenceSeries, setRecurrenceSeries] = useState<RecurrenceSeries[]>([]);
 
   const [expenses, setExpenses] = useState<Expense[]>(() => {
     const saved = localStorage.getItem(`${LOCAL_STORAGE_KEY}_expenses`);
@@ -634,7 +641,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     );
 
-    // 3. Expenses listener
+    // 3. RecurrenceSeries listener
+    const unsubRecurrenceSeries = onSnapshot(
+      collection(db, 'recurrenceSeries'),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const list = snapshot.docs.map((d) => ({ ...d.data(), id: d.id } as RecurrenceSeries));
+          setRecurrenceSeries(list);
+        } else {
+          setRecurrenceSeries([]);
+        }
+      },
+      (err) => {
+        console.warn('RecurrenceSeries snapshot notice:', err);
+      }
+    );
+
+    // 4. Expenses listener
     const unsubExpenses = onSnapshot(
       collection(db, 'expenses'),
       (snapshot) => {
@@ -723,6 +746,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => {
       unsubClients();
       unsubJobs();
+      unsubRecurrenceSeries();
       unsubExpenses();
       unsubUsers();
       unsubCompanies();
@@ -730,6 +754,87 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unsubAuth();
     };
   }, []);
+
+  // ETAPA 3: Automatic Idempotent Migration of existing clients to RecurrenceSeries
+  useEffect(() => {
+    if (!clients || clients.length === 0) return;
+
+    clients.forEach((client) => {
+      // 1. Check if client already has a RecurrenceSeries (valid, active or cancelled)
+      const existingSeries = recurrenceSeries.find((s) => s.clientId === client.id);
+      if (existingSeries) return;
+
+      // 2. Check if client has necessary recurrence parameters
+      const validFreqs = ['WEEKLY', 'FORTNIGHTLY', 'MONTHLY'];
+      if (!client.frequency || !validFreqs.includes(client.frequency)) return;
+
+      if (client.preferredDayOfWeek === undefined || client.preferredDayOfWeek === null || isNaN(Number(client.preferredDayOfWeek))) return;
+
+      // 3. Create idempotently a single RecurrenceSeries for this client
+      const startDate = client.customStartDate || (client.createdAt ? client.createdAt.split('T')[0] : '2026-08-01');
+      const seriesId = `rec_${client.id}`;
+      const newSeries: RecurrenceSeries = {
+        id: seriesId,
+        companyId: client.companyId || currentCompanyId || 'comp_wj_london',
+        clientId: client.id,
+        clientName: client.name,
+        startDate: startDate,
+        endDate: client.customEndDate || undefined,
+        frequency: client.frequency,
+        weekday: Number(client.preferredDayOfWeek),
+        time: client.preferredTime || '09:00',
+        cleanerId: client.preferredCleanerId || 'usr_waylla',
+        cleanerName: client.preferredCleanerName || 'Waylla',
+        estimatedDuration: client.estimatedDuration || 2.5,
+        price: client.defaultPrice || 45,
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+      };
+
+      console.log(`[Migration Idempotente] Criando RecurrenceSeries ${seriesId} para o cliente ${client.name} (${client.id})`);
+      setDoc(doc(db, 'recurrenceSeries', seriesId), sanitizeFirestoreData(newSeries)).catch((err) => {
+        console.error('Erro ao salvar RecurrenceSeries da migração no Firestore:', err);
+      });
+    });
+  }, [clients, recurrenceSeries, currentCompanyId]);
+
+  const addRecurrenceSeries = (seriesData: Omit<RecurrenceSeries, 'id' | 'companyId' | 'createdAt'>): string => {
+    const seriesId = `rec_${seriesData.clientId}_${Date.now()}`;
+    const newSeries: RecurrenceSeries = {
+      ...seriesData,
+      id: seriesId,
+      companyId: currentCompanyId,
+      createdAt: new Date().toISOString(),
+    };
+    setRecurrenceSeries((prev) => [...prev.filter((s) => s.id !== seriesId), newSeries]);
+    setDoc(doc(db, 'recurrenceSeries', seriesId), sanitizeFirestoreData(newSeries)).catch((err) => {
+      console.error('Error saving recurrenceSeries:', err);
+    });
+    return seriesId;
+  };
+
+  const cancelRecurrenceSeries = (seriesId: string, cutoffDate?: string) => {
+    const targetDate = cutoffDate || new Date().toISOString().split('T')[0];
+    setRecurrenceSeries((prev) =>
+      prev.map((s) => (s.id === seriesId ? { ...s, status: 'CANCELLED', cancelledAtDate: targetDate, updatedAt: new Date().toISOString() } : s))
+    );
+    updateDoc(doc(db, 'recurrenceSeries', seriesId), {
+      status: 'CANCELLED',
+      cancelledAtDate: targetDate,
+      updatedAt: new Date().toISOString(),
+    }).catch((err) => {
+      console.error('Error cancelling recurrence series:', err);
+    });
+  };
+
+  const updateRecurrenceSeries = (seriesId: string, updates: Partial<RecurrenceSeries>) => {
+    setRecurrenceSeries((prev) =>
+      prev.map((s) => (s.id === seriesId ? { ...s, ...updates, updatedAt: new Date().toISOString() } : s))
+    );
+    updateDoc(doc(db, 'recurrenceSeries', seriesId), sanitizeFirestoreData({ ...updates, updatedAt: new Date().toISOString() })).catch((err) => {
+      console.error('Error updating recurrence series:', err);
+    });
+  };
 
   // Sync theme class to <html> element
   useEffect(() => {
@@ -1427,36 +1532,88 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addNotification('Signature Saved', 'Client digital signature attached to job', 'SUCCESS');
   };
 
-  const deleteJob = (id: string, jobToDelete?: CleaningJob) => {
+  const deleteJob = (id: string, jobToDelete?: CleaningJob, scope: 'SINGLE' | 'THIS_AND_FUTURE' = 'SINGLE') => {
     const target = jobToDelete || jobs.find((j) => j.id === id);
-    if (target) {
-      const isVirtual = id.startsWith('virt_');
-      const docId = isVirtual ? `del_${target.clientId}_${target.date}` : id;
+    if (!target) {
+      deleteDoc(doc(db, 'jobs', id)).catch(() => {});
+      setJobs((prev) => prev.filter((j) => j.id !== id));
+      return;
+    }
 
-      const tombstone: CleaningJob = {
+    if (scope === 'THIS_AND_FUTURE') {
+      // Find recurrence series for this target
+      const series = recurrenceSeries.find(
+        (s) => (target.recurrenceSeriesId && s.id === target.recurrenceSeriesId) || (s.clientId === target.clientId && s.status === 'ACTIVE')
+      );
+
+      if (series) {
+        cancelRecurrenceSeries(series.id, target.date);
+      }
+
+      // Delete / tombstone explicit future jobs for this client on or after target.date
+      const futureJobs = jobs.filter((j) => j.clientId === target.clientId && j.date >= target.date);
+      futureJobs.forEach((futJob) => {
+        const docId = futJob.id.startsWith('virt_') ? `del_${futJob.clientId}_${futJob.date}` : futJob.id;
+        const tombstone: CleaningJob = {
+          ...futJob,
+          id: docId,
+          isDeleted: true,
+          status: 'CANCELLED',
+        };
+        setDoc(doc(db, 'jobs', docId), sanitizeFirestoreData(tombstone)).catch(() => {});
+      });
+
+      // Place tombstone for target job if virtual
+      const targetDocId = target.id.startsWith('virt_') ? `del_${target.clientId}_${target.date}` : target.id;
+      const targetTombstone: CleaningJob = {
         ...target,
-        id: docId,
+        id: targetDocId,
         isDeleted: true,
         status: 'CANCELLED',
       };
+      setDoc(doc(db, 'jobs', targetDocId), sanitizeFirestoreData(targetTombstone)).catch(() => {});
 
-      setDoc(doc(db, 'jobs', docId), sanitizeFirestoreData(tombstone)).catch((err) => {
-        console.warn('Error saving deletion tombstone to Firestore:', err);
-      });
+      setJobs((prev) =>
+        prev.filter((j) => !(j.clientId === target.clientId && j.date >= target.date)).concat([targetTombstone])
+      );
 
-      if (!isVirtual && docId !== id) {
-        deleteDoc(doc(db, 'jobs', id)).catch(() => {});
-      }
-
-      setJobs((prev) => prev.filter((j) => j.id !== id && j.id !== docId).concat([tombstone]));
-    } else {
-      deleteDoc(doc(db, 'jobs', id)).catch(() => {});
-      setJobs((prev) => prev.filter((j) => j.id !== id));
+      addNotification('Série Cancelada', `Série para ${target.clientName} cancelada a partir de ${target.date}`, 'INFO');
+      return;
     }
+
+    // Default 'SINGLE' scope
+    const isVirtual = id.startsWith('virt_');
+    const docId = isVirtual ? `del_${target.clientId}_${target.date}` : id;
+
+    const tombstone: CleaningJob = {
+      ...target,
+      id: docId,
+      isDeleted: true,
+      status: 'CANCELLED',
+    };
+
+    setDoc(doc(db, 'jobs', docId), sanitizeFirestoreData(tombstone)).catch((err) => {
+      console.warn('Error saving deletion tombstone to Firestore:', err);
+    });
+
+    if (!isVirtual && docId !== id) {
+      deleteDoc(doc(db, 'jobs', id)).catch(() => {});
+    }
+
+    setJobs((prev) => prev.filter((j) => j.id !== id && j.id !== docId).concat([tombstone]));
     addNotification('Agendamento Removido', 'Agendamento excluído da agenda com sucesso.', 'WARNING');
   };
 
   const clearAllScheduleJobs = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Cancel all active recurrence series
+    recurrenceSeries.forEach((series) => {
+      if (series.status === 'ACTIVE') {
+        cancelRecurrenceSeries(series.id, todayStr);
+      }
+    });
+
     const globalClearDoc: CleaningJob = {
       id: 'global_schedule_clear',
       companyId: currentCompanyId || 'comp_wj_london',
@@ -1469,7 +1626,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       whatsapp: '',
       cleanerId: '',
       cleanerName: '',
-      date: new Date().toISOString().split('T')[0],
+      date: todayStr,
       startTime: '00:00',
       estimatedDuration: 0,
       price: 0,
@@ -1679,6 +1836,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateClient,
       deleteClient,
       jobs: companyJobs,
+      recurrenceSeries,
+      addRecurrenceSeries,
+      cancelRecurrenceSeries,
+      updateRecurrenceSeries,
       addJob,
       updateJob,
       updateJobStatus,
@@ -1721,6 +1882,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       activeTab,
       companyClients,
       companyJobs,
+      recurrenceSeries,
       companyExpenses,
       companyPayrollPayments,
       notifications,

@@ -16,7 +16,7 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
   onClose,
   initialDate,
 }) => {
-  const { clients, users, addJob, updateClient, language } = useApp();
+  const { clients, users, addJob, addRecurrenceSeries, language } = useApp();
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -150,15 +150,22 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
       occurrences: occurrences
     });
 
-    // If creating a recurring job for an existing registered client, ensure client profile matches
+    let createdSeriesId: string | undefined = undefined;
+
     if (!isGuest && client && formData.frequency !== 'ONE_OFF') {
-      updateClient(client.id, {
+      createdSeriesId = addRecurrenceSeries({
+        clientId: client.id,
+        clientName: client.name,
+        startDate: formData.date,
+        endDate: formData.customEndDate.trim() || undefined,
         frequency: formData.frequency,
-        customStartDate: formData.date,
-        preferredDayOfWeek: getDayVal,
-        customIntervalDays: formData.frequency === 'CUSTOM_DAYS' ? Number(formData.customIntervalDays) : client.customIntervalDays,
-        customEndDate: formData.customEndDate.trim() || client.customEndDate,
-        active: true,
+        weekday: getDayVal,
+        time: formData.startTime,
+        cleanerId: cleanerIdStr,
+        cleanerName: cleanerNameStr,
+        estimatedDuration: Number(formData.estimatedDuration),
+        price: Number(formData.price),
+        status: 'ACTIVE',
       });
     }
 
@@ -191,6 +198,7 @@ export const NewJobModal: React.FC<NewJobModalProps> = ({
         customIntervalDays: (!isGuest && formData.frequency === 'CUSTOM_DAYS') ? Number(formData.customIntervalDays) : undefined,
         customStartDate: formData.date,
         customEndDate: (!isGuest && formData.customEndDate.trim()) || undefined,
+        recurrenceSeriesId: createdSeriesId,
         isRescheduled: true,
       });
     }

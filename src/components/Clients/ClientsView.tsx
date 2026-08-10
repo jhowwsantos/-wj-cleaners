@@ -286,22 +286,6 @@ const ClientsViewComponent: React.FC<ClientsViewProps> = ({
                       <span>{client.address}{client.city ? `, ${client.city}` : ''} (<strong className="text-slate-700 dark:text-slate-300 font-bold">{client.postcode}</strong>)</span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span className="text-[10px] font-extrabold uppercase bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200 px-2.5 py-0.5 rounded-full">
-                      {client.frequency === 'WEEKLY'
-                        ? (language === 'pt' ? 'Semanal' : 'Weekly')
-                        : client.frequency === 'FORTNIGHTLY'
-                        ? (language === 'pt' ? 'Quinzenal' : 'Fortnightly')
-                        : client.frequency === 'MONTHLY'
-                        ? (language === 'pt' ? 'Mensal' : 'Monthly')
-                        : client.frequency === 'CUSTOM_DAYS'
-                        ? (language === 'pt' ? `A cada ${client.customIntervalDays || 20} dias` : `Every ${client.customIntervalDays || 20} days`)
-                        : (language === 'pt' ? 'Avulso' : 'One-off')}
-                    </span>
-                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/80 px-2 py-0.5 rounded-md">
-                      {getDayName(client.preferredDayOfWeek, language)}
-                    </span>
-                  </div>
                 </div>
 
                 {/* Price & Duration */}
@@ -561,85 +545,7 @@ const ClientsViewComponent: React.FC<ClientsViewProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {getTranslation(language, 'frequency')}
-                  </label>
-                  <select
-                    value={formData.frequency}
-                    onChange={(e) => setFormData({ ...formData, frequency: e.target.value as any })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none"
-                  >
-                    <option value="WEEKLY">{getTranslation(language, 'weekly')}</option>
-                    <option value="FORTNIGHTLY">{getTranslation(language, 'fortnightly')}</option>
-                    <option value="MONTHLY">{getTranslation(language, 'monthly')}</option>
-                    <option value="CUSTOM_DAYS">{getTranslation(language, 'customDays')}</option>
-                    <option value="ONE_OFF">{getTranslation(language, 'oneOff')}</option>
-                  </select>
-                </div>
-
-                {formData.frequency === 'CUSTOM_DAYS' && (
-                  <>
-                    <div>
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        {getTranslation(language, 'customDaysLabel')}
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="365"
-                        required
-                        value={formData.customIntervalDays}
-                        onChange={(e) => setFormData({ ...formData, customIntervalDays: Math.max(1, Number(e.target.value)) })}
-                        className="w-full mt-1 p-2.5 bg-blue-50/50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
-                        placeholder="ex: 20"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        {getTranslation(language, 'customStartDateLabel')}
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        value={formData.customStartDate}
-                        onChange={(e) => setFormData({ ...formData, customStartDate: e.target.value })}
-                        className="w-full mt-1 p-2.5 bg-blue-50/50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
-                      />
-                    </div>
-                  </>
-                )}
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {getTranslation(language, 'preferredDay')}
-                  </label>
-                  <select
-                    value={formData.preferredDayOfWeek}
-                    onChange={(e) => setFormData({ ...formData, preferredDayOfWeek: Number(e.target.value) })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none"
-                  >
-                    <option value={1}>{getTranslation(language, 'monday')}</option>
-                    <option value={2}>{getTranslation(language, 'tuesday')}</option>
-                    <option value={3}>{getTranslation(language, 'wednesday')}</option>
-                    <option value={4}>{getTranslation(language, 'thursday')}</option>
-                    <option value={5}>{getTranslation(language, 'friday')}</option>
-                    <option value={6}>{getTranslation(language, 'saturday')}</option>
-                    <option value={0}>{getTranslation(language, 'sunday')}</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {getTranslation(language, 'preferredTime')}
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.preferredTime}
-                    onChange={(e) => setFormData({ ...formData, preferredTime: e.target.value })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none"
-                  />
-                </div>
-              </div>
+              {/* Contact Info */}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

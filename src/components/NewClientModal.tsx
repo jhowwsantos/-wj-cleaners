@@ -526,10 +526,10 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({
             </div>
           </div>
 
-          {/* Section 3: Pricing & Frequency */}
+          {/* Section 3: Pricing & Preferred Cleaner */}
           <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-700">
             <h4 className="text-xs font-black uppercase text-blue-600 dark:text-blue-400 tracking-wider">
-              {getTranslation(language, 'clientStep3')}
+              3. {language === 'pt' ? 'Valores e Profissional Preferido' : 'Pricing & Assigned Cleaner'}
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
@@ -574,82 +574,6 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  {getTranslation(language, 'frequency')}
-                </label>
-                <select
-                  value={formData.frequency}
-                  onChange={(e) => setFormData({ ...formData, frequency: e.target.value as Client['frequency'] })}
-                  className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
-                >
-                  <option value="WEEKLY">{getTranslation(language, 'weeklyOpt')}</option>
-                  <option value="FORTNIGHTLY">{getTranslation(language, 'fortnightlyOpt')}</option>
-                  <option value="MONTHLY">{getTranslation(language, 'monthlyOpt')}</option>
-                  <option value="CUSTOM_DAYS">{getTranslation(language, 'customDaysOpt')}</option>
-                  <option value="ONE_OFF">{getTranslation(language, 'oneOffOpt')}</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  {language === 'pt' ? 'Data Início da Agenda' : 'Schedule Start Date'}
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={formData.customStartDate}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const d = new Date(val + 'T00:00:00');
-                    const dayNum = isNaN(d.getTime()) ? formData.preferredDayOfWeek : d.getDay();
-                    setFormData({
-                      ...formData,
-                      customStartDate: val,
-                      preferredDayOfWeek: dayNum,
-                    });
-                  }}
-                  className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  {getTranslation(language, 'preferredDay') || (language === 'pt' ? 'Dia da Semana' : 'Preferred Day')}
-                </label>
-                <select
-                  value={formData.preferredDayOfWeek}
-                  onChange={(e) => setFormData({ ...formData, preferredDayOfWeek: Number(e.target.value) })}
-                  className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
-                >
-                  <option value={1}>{getTranslation(language, 'monday')}</option>
-                  <option value={2}>{getTranslation(language, 'tuesday')}</option>
-                  <option value={3}>{getTranslation(language, 'wednesday')}</option>
-                  <option value={4}>{getTranslation(language, 'thursday')}</option>
-                  <option value={5}>{getTranslation(language, 'friday')}</option>
-                  <option value={6}>{getTranslation(language, 'saturday')}</option>
-                  <option value={0}>{getTranslation(language, 'sunday')}</option>
-                </select>
-              </div>
-
-              {formData.frequency === 'CUSTOM_DAYS' && (
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {getTranslation(language, 'customDaysLabel')}
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="365"
-                    required
-                    value={formData.customIntervalDays}
-                    onChange={(e) => setFormData({ ...formData, customIntervalDays: Math.max(1, Number(e.target.value)) })}
-                    className="w-full mt-1 p-2.5 bg-blue-50/50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
-                    placeholder="ex: 20"
-                  />
-                </div>
-              )}
-
-              <div className="col-span-2 sm:col-span-4">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   {getTranslation(language, 'assignedCleanerOpt')}
                 </label>

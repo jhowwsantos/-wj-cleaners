@@ -487,7 +487,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           });
           setClients(INITIAL_CLIENTS);
         } else {
-          const validDocsMap = new Map<string, Client>();
+          const firestoreClientsMap = new Map<string, Client>();
           const deletedIds = new Set<string>();
 
           snapshot.docs.forEach((d) => {
@@ -501,13 +501,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }
 
             if (!data.name) return;
-            validDocsMap.set(d.id, data as Client);
+            const key = data.id || d.id;
+            firestoreClientsMap.set(key, data as Client);
           });
 
           const finalClients: Client[] = [];
 
-          validDocsMap.forEach((clientData, docId) => {
-            if (!deletedIds.has(docId) && !deletedIds.has(clientData.id)) {
+          // Include initial clients unless marked as deleted
+          INITIAL_CLIENTS.forEach((initClient) => {
+            if (deletedIds.has(initClient.id)) return;
+
+            const existing = firestoreClientsMap.get(initClient.id);
+            if (existing) {
+              finalClients.push({ ...initClient, ...existing, id: initClient.id });
+            } else {
+              finalClients.push(initClient);
+            }
+          });
+
+          // Include custom user-created clients from Firestore
+          firestoreClientsMap.forEach((clientData, id) => {
+            if (!deletedIds.has(id) && !INITIAL_CLIENTS.some((ic) => ic.id === id)) {
               finalClients.push(clientData);
             }
           });
@@ -1230,6 +1244,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addJob = (j: Omit<CleaningJob, 'id' | 'companyId'>) => {
+    deleteDoc(doc(db, 'jobs', 'global_schedule_clear')).catch(() => {});
     const randomSuffix = Math.random().toString(36).substring(2, 7);
     const newJob: CleaningJob = {
       ...j,
@@ -1237,7 +1252,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       companyId: currentCompanyId,
       invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
     };
-    setJobs((prev) => [newJob, ...prev]);
+    setJobs((prev) => [newJob, ...prev.filter((x) => x.id !== 'global_schedule_clear')]);
     setDoc(doc(db, 'jobs', newJob.id), sanitizeFirestoreData(newJob)).catch(() => {});
 
     addNotification('Cleaning Scheduled', `Scheduled for ${newJob.clientName} on ${newJob.date}`, 'SUCCESS');
@@ -1487,6 +1502,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Helper for auto-generating recurring schedule
   const autoGenerateRecurringJobsInternal = (client: Client, weeksAhead = 8) => {
+    deleteDoc(doc(db, 'jobs', 'global_schedule_clear')).catch(() => {});
     const newJobs: CleaningJob[] = [];
     const preferredDay = client.preferredDayOfWeek ?? 1;
     const baseDateStr = client.customStartDate || client.createdAt || new Date().toISOString().split('T')[0];
@@ -1542,7 +1558,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (client.frequency === 'ONE_OFF') break;
     }
 
-    setJobs((prev) => [...newJobs, ...prev]);
+    setJobs((prev) => [...newJobs, ...prev.filter((j) => j.id !== 'global_schedule_clear')]);
   };
 
   const autoGenerateRecurringJobs = (clientId: string, weeksAhead = 8) => {

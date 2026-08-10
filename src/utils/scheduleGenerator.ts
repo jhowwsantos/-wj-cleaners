@@ -315,7 +315,7 @@ export function getCombinedJobsForDate(
 
   const targetWeekStart = getIsoWeekStart(targetDateStr);
 
-  // Generate virtual jobs using RecurrenceSeries if available
+  // Generate virtual jobs using RecurrenceSeries ONLY (no client fallback)
   if (!globalClearDoc && recurrenceSeries && recurrenceSeries.length > 0) {
     recurrenceSeries.forEach((series) => {
       if (companyId && series.companyId !== companyId) return;
@@ -360,87 +360,6 @@ export function getCombinedJobsForDate(
           petNotes: client?.petNotes,
           recurrenceSeriesId: series.id,
           invoiceNumber: `INV-${targetDateStr.replace(/-/g, '')}-${series.clientId.slice(-4)}`,
-        });
-      }
-    });
-  } else {
-    // Fallback for legacy clients prior to RecurrenceSeries migration
-    companyClients.forEach((client) => {
-      if (
-        existingClientIds.has(client.id) ||
-        existingClientNames.has((client.name || '').trim().toLowerCase())
-      ) {
-        return;
-      }
-
-      if (globalClearDoc) {
-        return;
-      }
-
-      const hasExplicitJobInCycle = explicitJobs.some((j) => {
-        if (
-          j.clientId !== client.id ||
-          (j as any).isDeleted ||
-          (j.status as string) === 'DELETED' ||
-          (j.status as string) === 'CANCELLED'
-        ) {
-          return false;
-        }
-
-        if (
-          client.frequency !== 'CUSTOM_DAYS' &&
-          client.preferredDayOfWeek !== undefined &&
-          client.preferredDayOfWeek !== null
-        ) {
-          const [jY, jM, jD] = j.date.split('-').map(Number);
-          const jobDayOfWeek = new Date(Date.UTC(jY, jM - 1, jD)).getUTCDay();
-          if (jobDayOfWeek !== client.preferredDayOfWeek && !j.isRescheduled) {
-            return false;
-          }
-        }
-
-        const clientFreq = client.frequency || 'WEEKLY';
-        if (clientFreq === 'WEEKLY') {
-          return getIsoWeekStart(j.date) === targetWeekStart;
-        }
-        const [jY, jM, jD] = j.date.split('-').map(Number);
-        const [tY, tM, tD] = targetDateStr.split('-').map(Number);
-        const diffMs = Math.abs(new Date(Date.UTC(jY, jM - 1, jD)).getTime() - new Date(Date.UTC(tY, tM - 1, tD)).getTime());
-        const diffDays = diffMs / (24 * 60 * 60 * 1000);
-        return diffDays <= 5;
-      });
-
-      if (hasExplicitJobInCycle) return;
-
-      if (isClientRecurringOnDate(client, targetDateStr, explicitJobs)) {
-        virtualJobs.push({
-          id: `virt_${client.id}_${targetDateStr}`,
-          companyId: client.companyId,
-          clientId: client.id,
-          clientName: client.name,
-          address: client.address,
-          postcode: client.postcode,
-          city: client.city,
-          latitude: client.latitude,
-          longitude: client.longitude,
-          phone: client.phone,
-          whatsapp: client.whatsapp,
-          cleanerId: client.preferredCleanerId || 'usr_waylla',
-          cleanerName: client.preferredCleanerName || 'Waylla',
-          date: targetDateStr,
-          startTime: client.preferredTime || '09:00',
-          estimatedDuration: client.estimatedDuration || 2.5,
-          price: client.defaultPrice || 45,
-          status: isPastDate ? 'COMPLETED' : 'SCHEDULED',
-          paymentStatus: 'PENDING',
-          keyDetails: client.keyDetails,
-          alarmCode: client.alarmCode,
-          hasPets: client.hasPets,
-          petNotes: client.petNotes,
-          customIntervalDays: client.customIntervalDays,
-          customStartDate: client.customStartDate,
-          customEndDate: client.customEndDate,
-          invoiceNumber: `INV-${targetDateStr.replace(/-/g, '')}-${client.id.slice(-4)}`,
         });
       }
     });

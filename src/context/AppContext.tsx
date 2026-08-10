@@ -755,49 +755,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  // ETAPA 3: Automatic Idempotent Migration of existing clients to RecurrenceSeries
-  useEffect(() => {
-    if (!clients || clients.length === 0) return;
-
-    clients.forEach((client) => {
-      // 1. Check if client already has a RecurrenceSeries (valid, active or cancelled)
-      const existingSeries = recurrenceSeries.find((s) => s.clientId === client.id);
-      if (existingSeries) return;
-
-      // 2. Check if client has necessary recurrence parameters
-      const validFreqs = ['WEEKLY', 'FORTNIGHTLY', 'MONTHLY'];
-      if (!client.frequency || !validFreqs.includes(client.frequency)) return;
-
-      if (client.preferredDayOfWeek === undefined || client.preferredDayOfWeek === null || isNaN(Number(client.preferredDayOfWeek))) return;
-
-      // 3. Create idempotently a single RecurrenceSeries for this client
-      const startDate = client.customStartDate || (client.createdAt ? client.createdAt.split('T')[0] : '2026-08-01');
-      const seriesId = `rec_${client.id}`;
-      const newSeries: RecurrenceSeries = {
-        id: seriesId,
-        companyId: client.companyId || currentCompanyId || 'comp_wj_london',
-        clientId: client.id,
-        clientName: client.name,
-        startDate: startDate,
-        endDate: client.customEndDate || undefined,
-        frequency: client.frequency,
-        weekday: Number(client.preferredDayOfWeek),
-        time: client.preferredTime || '09:00',
-        cleanerId: client.preferredCleanerId || 'usr_waylla',
-        cleanerName: client.preferredCleanerName || 'Waylla',
-        estimatedDuration: client.estimatedDuration || 2.5,
-        price: client.defaultPrice || 45,
-        status: 'ACTIVE',
-        createdAt: new Date().toISOString(),
-      };
-
-      console.log(`[Migration Idempotente] Criando RecurrenceSeries ${seriesId} para o cliente ${client.name} (${client.id})`);
-      setDoc(doc(db, 'recurrenceSeries', seriesId), sanitizeFirestoreData(newSeries)).catch((err) => {
-        console.error('Erro ao salvar RecurrenceSeries da migração no Firestore:', err);
-      });
-    });
-  }, [clients, recurrenceSeries, currentCompanyId]);
-
   const addRecurrenceSeries = (seriesData: Omit<RecurrenceSeries, 'id' | 'companyId' | 'createdAt'>): string => {
     const seriesId = `rec_${seriesData.clientId}_${Date.now()}`;
     const newSeries: RecurrenceSeries = {
@@ -1607,12 +1564,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const clearAllScheduleJobs = () => {
     const todayStr = new Date().toISOString().split('T')[0];
 
-    // Cancel all active recurrence series
-    recurrenceSeries.forEach((series) => {
-      if (series.status === 'ACTIVE') {
-        cancelRecurrenceSeries(series.id, todayStr);
-      }
-    });
+    // Cancel and purge all recurrence series from Firestore & state
+    getDocs(collection(db, 'recurrenceSeries'))
+      .then((snapshot) => {
+        snapshot.docs.forEach((d) => {
+          deleteDoc(doc(db, 'recurrenceSeries', d.id)).catch(() => {});
+        });
+      })
+      .catch((err) => {
+        console.warn('Error purging recurrenceSeries collection in Firestore:', err);
+      });
+
+    setRecurrenceSeries([]);
 
     const globalClearDoc: CleaningJob = {
       id: 'global_schedule_clear',

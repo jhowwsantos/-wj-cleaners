@@ -6,6 +6,7 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  getDoc,
   getDocs,
 } from 'firebase/firestore';
 import {
@@ -821,9 +822,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 3. Handle Super Owner Account Authentication (Jhonatan / Waylla)
     if (isSuperOwnerAccount) {
+      const ownerId = isJhonatan ? 'usr_jhonatan' : 'usr_waylla';
+
+      // Check if user already exists in Firestore to PRESERVE avatarUrl and custom fields
+      let existingAvatarUrl: string | undefined = undefined;
+      let existingPhone: string | undefined = undefined;
+      let existingHomeAddress: string | undefined = undefined;
+      let existingHomePostcode: string | undefined = undefined;
+
+      try {
+        const userDocRef = doc(db, 'users', ownerId);
+        const userSnap = await getDoc(userDocRef);
+        if (userSnap.exists()) {
+          const existingData = userSnap.data() as User;
+          if (existingData.avatarUrl) existingAvatarUrl = existingData.avatarUrl;
+          if (existingData.phone) existingPhone = existingData.phone;
+          if (existingData.homeAddress) existingHomeAddress = existingData.homeAddress;
+          if (existingData.homePostcode) existingHomePostcode = existingData.homePostcode;
+        }
+      } catch (err) {
+        console.warn('Firestore user doc lookup notice:', err);
+      }
+
       const userObj: User = {
         ...(matchedUser || INITIAL_USERS[0]),
-        id: isJhonatan ? 'usr_jhonatan' : 'usr_waylla',
+        id: ownerId,
         companyId: currentCompany?.id || 'comp_wj_london',
         name: isJhonatan ? 'Jhonatan' : 'Waylla',
         email: cleanEmail,
@@ -832,6 +855,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         active: true,
         mustChangePassword: false,
       };
+
+      if (existingAvatarUrl) userObj.avatarUrl = existingAvatarUrl;
+      if (existingPhone) userObj.phone = existingPhone;
+      if (existingHomeAddress) userObj.homeAddress = existingHomeAddress;
+      if (existingHomePostcode) userObj.homePostcode = existingHomePostcode;
 
       // Sync account to Firebase Auth if not authenticated yet
       if (!firebaseAuthenticated && (firebaseError?.code === 'auth/user-not-found' || firebaseError?.code === 'auth/invalid-credential')) {
@@ -877,6 +905,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         active: true,
       };
 
+      try {
+        const userDocRef = doc(db, 'users', userObj.id);
+        const userSnap = await getDoc(userDocRef);
+        if (userSnap.exists()) {
+          const existingData = userSnap.data() as User;
+          if (existingData.avatarUrl) userObj.avatarUrl = existingData.avatarUrl;
+        }
+      } catch (err) {
+        console.warn('Firestore user avatar check notice:', err);
+      }
+
       setCurrentUserIdState(userObj.id);
       const targetCompanyId = userObj.companyId || 'comp_wj_london';
       setCurrentCompanyIdState(targetCompanyId);
@@ -917,8 +956,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
 
-      // Sync user profile to Firestore
+      // Sync user profile to Firestore, preserving avatarUrl
       try {
+        const userDocRef = doc(db, 'users', matchedUser.id);
+        const userSnap = await getDoc(userDocRef);
+        if (userSnap.exists()) {
+          const existingData = userSnap.data() as User;
+          if (existingData.avatarUrl) matchedUser.avatarUrl = existingData.avatarUrl;
+        }
         await setDoc(doc(db, 'users', matchedUser.id), matchedUser, { merge: true });
       } catch (err) {
         console.warn('Firestore user sync warning:', err);

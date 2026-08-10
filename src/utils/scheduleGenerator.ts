@@ -154,7 +154,9 @@ export function getCombinedJobsForDate(
 
   // Check if a global schedule clear tombstone exists
   const globalClearDoc = explicitJobs.find((j) => j.id === 'global_schedule_clear' || (j as any).isCleared);
-  const globalClearCreatedAt = globalClearDoc ? ((globalClearDoc as any).createdAt || '2099-12-31') : null;
+  const globalClearCreatedAt = globalClearDoc
+    ? ((globalClearDoc as any).createdAt || globalClearDoc.date || new Date().toISOString())
+    : null;
 
   // Get all explicit jobs for this date that are NOT deleted and match client's registered day (unless manually rescheduled)
   const rawJobsForDate = explicitJobs.filter((j) => {
@@ -272,6 +274,16 @@ export function getCombinedJobsForDate(
       existingClientNames.has((client.name || '').trim().toLowerCase())
     ) {
       return;
+    }
+
+    // If a global schedule clear tombstone exists, suppress virtual jobs for clients created/configured prior to the clear date
+    if (globalClearDoc && globalClearCreatedAt) {
+      const clientCreatedAt = client.createdAt || '2000-01-01';
+      const clientStartDate = client.customStartDate || clientCreatedAt.split('T')[0];
+      const clearDateStr = globalClearCreatedAt.split('T')[0];
+      if (clientCreatedAt < globalClearCreatedAt && clientStartDate <= clearDateStr) {
+        return;
+      }
     }
 
     // Prevent duplicate virtual job if client already has an explicit job in this week/cycle (e.g. moved from Sunday to Monday)

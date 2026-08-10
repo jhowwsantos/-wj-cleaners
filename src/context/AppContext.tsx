@@ -1467,7 +1467,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const clearAllScheduleJobs = () => {
-    setJobs([]);
     const globalClearDoc: CleaningJob = {
       id: 'global_schedule_clear',
       companyId: currentCompanyId || 'comp_wj_london',
@@ -1480,7 +1479,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       whatsapp: '',
       cleanerId: '',
       cleanerName: '',
-      date: '2026-01-01',
+      date: new Date().toISOString().split('T')[0],
       startTime: '00:00',
       estimatedDuration: 0,
       price: 0,
@@ -1490,6 +1489,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString(),
       notes: `ALL_SCHEDULE_CLEARED_${Date.now()}`,
     };
+
+    setJobs([globalClearDoc]);
 
     setDoc(doc(db, 'jobs', 'global_schedule_clear'), sanitizeFirestoreData(globalClearDoc)).catch((err) => {
       console.warn('Error saving global clear doc:', err);

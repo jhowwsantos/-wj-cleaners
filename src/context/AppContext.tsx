@@ -487,62 +487,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           });
           setClients(INITIAL_CLIENTS);
         } else {
-          const canonicalClientIds = new Set(INITIAL_CLIENTS.map((c) => c.id));
-          const nameToCanonicalId = new Map<string, string>();
-          INITIAL_CLIENTS.forEach((c) => {
-            nameToCanonicalId.set(c.name.toLowerCase().trim(), c.id);
-          });
-
-          // 1. Identify valid documents and delete non-canonical duplicate documents from Firestore
           const validDocsMap = new Map<string, Client>();
+          const deletedIds = new Set<string>();
 
           snapshot.docs.forEach((d) => {
-            const data = d.data() as Client;
-            if (!data || !data.name) return;
+            const data = d.data() as any;
+            if (!data) return;
 
-            const nameKey = data.name.toLowerCase().trim();
-            const canonicalId = nameToCanonicalId.get(nameKey);
-
-            if (canonicalId) {
-              if (d.id !== canonicalId) {
-                // Delete duplicate/non-canonical client document from Firestore
-                deleteDoc(doc(db, 'clients', d.id)).catch(() => {});
-              } else {
-                validDocsMap.set(canonicalId, data);
-              }
-            } else {
-              // Store valid custom user-created client
-              validDocsMap.set(d.id, data);
+            if (data.isDeleted) {
+              deletedIds.add(d.id);
+              if (data.id) deletedIds.add(data.id);
+              return;
             }
+
+            if (!data.name) return;
+            validDocsMap.set(d.id, data as Client);
           });
 
-          // 2. Build canonical client list guaranteeing frequency, preferred day, and address consistency
           const finalClients: Client[] = [];
 
-          INITIAL_CLIENTS.forEach((initClient) => {
-            const existing = validDocsMap.get(initClient.id);
-            if (existing) {
-              const merged: Client = {
-                ...initClient,
-                ...existing,
-                id: initClient.id,
-              };
-              finalClients.push(merged);
-
-              // Keep Firestore updated with canonical doc ID if needed
-              if (existing.id !== initClient.id) {
-                setDoc(doc(db, 'clients', initClient.id), sanitizeFirestoreData(merged), { merge: true }).catch(() => {});
-              }
-            } else {
-              finalClients.push(initClient);
-              setDoc(doc(db, 'clients', initClient.id), sanitizeFirestoreData(initClient)).catch(() => {});
-            }
-          });
-
-          // Include any non-initial active custom clients
-          validDocsMap.forEach((data, id) => {
-            if (!canonicalClientIds.has(id)) {
-              finalClients.push(data);
+          validDocsMap.forEach((clientData, docId) => {
+            if (!deletedIds.has(docId) && !deletedIds.has(clientData.id)) {
+              finalClients.push(clientData);
             }
           });
 
@@ -1211,11 +1177,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
     );
 
-    deleteDoc(doc(db, 'clients', id)).catch((err) => {
-      console.warn('Error deleting client doc from Firestore:', err);
+    // Save tombstone document in Firestore so snapshot listener respects the deletion permanently
+    const tombstone = {
+      id,
+      name: targetClient?.name || '',
+      isDeleted: true,
+      updatedAt: new Date().toISOString(),
+    };
+
+    setDoc(doc(db, 'clients', id), sanitizeFirestoreData(tombstone)).catch((err) => {
+      console.warn('Error saving deleted client tombstone to Firestore:', err);
     });
 
-    // Delete associated jobs from Firestore (in-memory state)
+    // Delete associated jobs from Firestore
     jobs.forEach((j) => {
       if (
         j.clientId === id ||
@@ -1223,6 +1197,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         (targetClient && j.clientName?.trim().toLowerCase() === targetClient.name.trim().toLowerCase())
       ) {
         if (!j.id.startsWith('virt_')) {
+          setDoc(doc(db, 'jobs', j.id), { id: j.id, isDeleted: true }, { merge: true }).catch(() => {});
           deleteDoc(doc(db, 'jobs', j.id)).catch(() => {});
         }
       }

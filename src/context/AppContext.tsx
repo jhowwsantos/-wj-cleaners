@@ -1528,6 +1528,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         price: client.defaultPrice,
         status: 'SCHEDULED',
         paymentStatus: 'PENDING',
+        createdAt: new Date().toISOString(),
         keyDetails: client.keyDetails,
         alarmCode: client.alarmCode,
         hasPets: client.hasPets,

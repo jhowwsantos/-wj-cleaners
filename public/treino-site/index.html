@@ -25,13 +25,13 @@ h1{font-size:21px;margin:0 0 18px;font-weight:900;letter-spacing:.3px}.list{disp
 <script>
 (()=>{"use strict";
 const plan={
-SEG:{title:"SEGUNDA — EMPURRAR",list:[["seg1","Supino Reto","3 séries • 6–10 rep",120],["seg2","Supino Inclinado Halteres","3 séries • 8–12 rep",90],["seg3","Elevação Lateral","4 séries • 12–15 rep",60],["seg4","Tríceps na Polia","3 séries • 10–15 rep",60]]},
-TER:{title:"TERÇA — PUXAR",list:[["ter1","Puxada Alta","3 séries • 8–12 rep",90],["ter2","Remada Curvada","3 séries • 8–12 rep",90],["ter3","Pulldown","3 séries • 10–15 rep",60],["ter4","Rosca Direta","3 séries • 8–12 rep",60]]},
-QUA:{title:"QUARTA — PERNA COMPLETA",list:[["qua1","Agachamento Livre","4 séries • 6–10 rep",120],["qua2","Leg Press","3 séries • 8–12 rep",90],["qua3","Cadeira Extensora","3 séries • 12–15 rep",60],["qua4","Mesa Flexora","3 séries • 10–15 rep",60],["qua5","Panturrilha no Smith","4 séries • 15–20 rep",60]]},
-QUI:{title:"QUINTA — EMPURRAR",list:[["qui1","Desenvolvimento Halteres","3 séries • 8–12 rep",90],["qui2","Supino Máquina","3 séries • 8–12 rep",90],["qui3","Elevação Frontal","3 séries • 12–15 rep",60],["qui4","Tríceps Testa","3 séries • 10–15 rep",60]]},
-SEX:{title:"SEXTA — PUXAR",list:[["sex1","Remada Sentada Cabo","3 séries • 8–12 rep",90],["sex2","Puxada Triângulo","3 séries • 8–12 rep",90],["sex3","Crucifixo Inverso","3 séries • 12–15 rep",60],["sex4","Rosca Martelo","3 séries • 10–12 rep",60]]}
+SEG:{title:"SEGUNDA — PUSH A (Peito, Ombro, Tríceps)",list:[["seg1","Supino Reto","3 séries • 8-10 reps",120],["seg2","Supino Inclinado com Halteres","3 séries • 8-12 reps",90],["seg3","Elevação Lateral","4 séries • 12-15 reps",60],["seg4","Desenvolvimento Máquina","3 séries • 8-12 reps",90],["seg5","Tríceps na Polia","3 séries • 10-15 reps",60]]},
+TER:{title:"TERÇA — PULL A (Costas, Bíceps)",list:[["ter1","Puxada Alta","3 séries • 8-12 reps",90],["ter2","Remada Curvada","3 séries • 8-12 reps",90],["ter3","Remada Sentada","3 séries • 10-12 reps",60],["ter4","Rosca Direta","3 séries • 8-12 reps",60],["ter5","Rosca Martelo","3 séries • 10-12 reps",60]]},
+QUA:{title:"QUARTA — PERNA COMPLETA",list:[["qua1","Agachamento Livre","4 séries • 8-10 reps",120],["qua2","Leg Press 45º","3 séries • 10-12 reps",90],["qua3","Cadeira Extensora","3 séries • 12-15 reps",60],["qua4","Mesa Flexora","3 séries • 10-15 reps",60],["qua5","Panturrilha no Smith","4 séries • 15-20 reps",60]]},
+QUI:{title:"QUINTA — PUSH B (Peito, Ombro, Tríceps)",list:[["qui1","Crucifixo Polia","3 séries • 10-15 reps",90],["qui2","Supino Máquina","3 séries • 8-12 reps",90],["qui3","Elevação Frontal","3 séries • 12-15 reps",60],["qui4","Elevação Lateral","3 séries • 12-15 reps",60],["qui5","Tríceps Testa","3 séries • 10-15 reps",60]]},
+SEX:{title:"SEXTA — PULL B (Costas, Bíceps)",list:[["sex1","Barra Fixa ou Graviton","3 séries • Falha",120],["sex2","Remada Unilateral (Serrote)","3 séries • 8-12 reps",90],["sex3","Crucifixo Inverso","3 séries • 12-15 reps",60],["sex4","Rosca Alternada","3 séries • 10-12 reps",60],["sex5","Rosca Scott","3 séries • 10-12 reps",60]]}
 };
-const key="treinoPremiumDataV2";let day="SEG",data={};try{data=JSON.parse(localStorage.getItem(key)||"{}")||{}}catch(e){data={}}
+const key="treinoPremiumData";let day="SEG",data={};try{data=JSON.parse(localStorage.getItem(key)||"{}")||{}}catch(e){data={}}
 let timerInt=null,endAt=0;
 const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function save(){try{localStorage.setItem(key,JSON.stringify(data))}catch(e){}}

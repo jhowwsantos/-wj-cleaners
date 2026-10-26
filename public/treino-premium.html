@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121214">
+<title>Meu Treino Premium</title>
+<style>
+:root{color-scheme:dark;--bg:#09090b;--panel:#121214;--card:#18181b;--line:#27272a;--gold:#f59e0b;--gold2:#f4c542;--text:#f4f4f5;--muted:#a1a1aa}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer;touch-action:manipulation}
+.app{max-width:520px;margin:0 auto;min-height:100dvh;background:#09090b;padding-bottom:30px}
+header{position:sticky;top:0;z-index:5;background:rgba(18,18,20,.96);backdrop-filter:blur(16px);padding:20px 20px 16px;border-bottom:1px solid #202024}
+.topline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
+h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.5px}
+.goal{display:flex;align-items:center;gap:6px;border:1px solid #92400e66;background:#f59e0b12;color:var(--gold2);padding:8px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.progress-card,.selector{background:#18181b;border:1px solid #27272a;border-radius:20px;padding:16px}
+.progress-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;font-size:13px}
+.progress-row span:last-child{color:var(--muted);font-size:12px}
+.track{height:8px;background:#27272a;border-radius:999px;overflow:hidden}
+.fill{height:100%;width:0;background:linear-gradient(90deg,#d97706,#fbbf24);border-radius:999px;transition:width .25s}
+main{padding:14px 16px}
+.selector{padding:18px}
+.section-label{font-size:13px;color:#d4d4d8;font-weight:700;margin:0 0 14px}
+.days{display:flex;gap:8px;overflow-x:auto;padding-bottom:5px;margin-bottom:20px;scrollbar-width:none}
+.days::-webkit-scrollbar{display:none}
+.day{flex:1;min-width:54px;border:1px solid transparent;background:#27272a;color:#a1a1aa;border-radius:999px;padding:12px 10px;font-size:12px;font-weight:800}
+.day.active{background:#f59e0b20;color:#fbbf24;border-color:#f59e0b55}
+h2{font-size:16px;line-height:1.35;margin:0 0 8px;font-weight:850}
+.subtitle{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 18px}
+.exercise-list{display:flex;flex-direction:column;gap:12px}
+.exercise{background:#18181b;border:1px solid #27272a;border-radius:17px;padding:14px;transition:border-color .2s}
+.exercise.completed{border-color:#f59e0b55;background:linear-gradient(120deg,#1c1b17,#18181b)}
+.exercise-top{display:flex;align-items:center;gap:11px}
+.exercise-icon{width:44px;height:44px;flex-shrink:0;display:grid;place-items:center;background:#09090b;border-radius:13px;color:#f59e0b}
+.exercise-icon svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.check{width:24px;height:24px;flex-shrink:0;appearance:none;border:2px solid #52525b;border-radius:7px;background:#09090b;display:grid;place-items:center;margin:0}
+.check:checked{background:#f59e0b;border-color:#f59e0b}
+.check:checked:after{content:"✓";font-size:17px;line-height:1;color:#18181b;font-weight:900}
+.exercise-info{flex:1;min-width:0}
+.exercise-name{font-size:14px;line-height:1.25;font-weight:750;margin:0 0 5px}
+.meta{font-size:11px;line-height:1.45;color:#71717a}
+.rest{min-width:83px;max-width:105px;border:1px solid #3f3f46;border-radius:999px;padding:10px 10px;background:#27272a;color:#e4e4e7;font-size:11px;font-weight:750;display:flex;justify-content:center;align-items:center;gap:5px}
+.rest.running{background:#f59e0b1f;color:#fbbf24;border-color:#f59e0b66}
+.rest svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.note{width:100%;margin-top:13px;border:1px solid #27272a;border-radius:12px;padding:12px;background:#09090b;color:#e4e4e7;font-size:13px;outline:none}
+.note::placeholder{color:#52525b}
+.note:focus{border-color:#f59e0b80}
+.footer{padding:16px 18px;color:#71717a;font-size:11px;text-align:center}
+button:focus-visible,input:focus-visible{outline:2px solid #fbbf24;outline-offset:3px}
+@media(min-width:520px){main{padding:18px 20px}.exercise{padding:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="topline">
+    <h1>Meu Treino 💪</h1>
+    <div class="goal"><span>◎</span><span>Meta de Hipertrofia: 80 kg</span></div>
+  </div>
+  <div class="progress-card">
+    <div class="progress-row"><strong>Progresso do dia</strong><span id="progress-text">0 de 6 exercícios</span></div>
+    <div class="track"><div class="fill" id="progress-fill"></div></div>
+  </div>
+</header>
+<main>
+  <section class="selector">
+    <p class="section-label">Escolha o dia</p>
+    <nav class="days" id="days" aria-label="Dias de treino"></nav>
+    <div class="day-heading">
+      <h2 id="day-title"></h2>
+      <p class="subtitle">Mini-ilustração, séries, repetições e descanso de cada exercício.</p>
+    </div>
+    <div class="exercise-list" id="exercise-list"></div>
+  </section>
+</main>
+<div class="footer">Seu treino • O progresso é salvo neste navegador quando disponível.</div>
+</div>
+<script>
+(function(){
+"use strict";
+const days=["SEG","TER","QUA","QUI","SEX"];
+const workouts={
+SEG:{title:"PUSH A (PEITO, OMBRO, TRÍCEPS)",exercises:[
+{id:"seg-1",name:"Supino reto",sets:3,reps:"8-12",rest:90,icon:"dumbbell"},
+{id:"seg-2",name:"Supino inclinado",sets:3,reps:"8-12",rest:90,icon:"dumbbell"},
+{id:"seg-3",name:"Elevação lateral",sets:4,reps:"12-15",rest:60,icon:"person"},
+{id:"seg-4",name:"Desenvolvimento",sets:3,reps:"8-12",rest:90,icon:"dumbbell"},
+{id:"seg-5",name:"Tríceps corda",sets:3,reps:"10-15",rest:60,icon:"activity"},
+{id:"seg-6",name:"Tríceps testa",sets:3,reps:"10-15",rest:60,icon:"dumbbell"}]},
+TER:{title:"PULL A (COSTAS, BÍCEPS)",exercises:[
+{id:"ter-1",name:"Puxada alta",sets:3,reps:"8-12",rest:90,icon:"activity"},
+{id:"ter-2",name:"Remada curvada",sets:3,reps:"8-12",rest:90,icon:"person"},
+{id:"ter-3",name:"Remada sentada",sets:3,reps:"8-12",rest:90,icon:"activity"},
+{id:"ter-4",name:"Rosca direta",sets:3,reps:"10-12",rest:60,icon:"dumbbell"},
+{id:"ter-5",name:"Rosca martelo",sets:3,reps:"10-12",rest:60,icon:"dumbbell"}]},
+QUA:{title:"PERNA COMPLETA",exercises:[
+{id:"qua-1",name:"Agachamento livre",sets:4,reps:"8-12",rest:120,icon:"person"},
+{id:"qua-2",name:"Leg Press 45º",sets:3,reps:"10-12",rest:120,icon:"activity"},
+{id:"qua-3",name:"Cadeira Extensora",sets:3,reps:"12-15",rest:90,icon:"activity"},
+{id:"qua-4",name:"Mesa Flexora",sets:3,reps:"10-15",rest:90,icon:"activity"},
+{id:"qua-5",name:"Cadeira Abdutora",sets:3,reps:"12-15",rest:90,icon:"activity"},
+{id:"qua-6",name:"Panturrilha em pé",sets:4,reps:"15-20",rest:60,icon:"person"}]},
+QUI:{title:"PUSH B (PEITO, OMBRO, TRÍCEPS)",exercises:[
+{id:"qui-1",name:"Crucifixo polia",sets:3,reps:"10-15",rest:90,icon:"activity"},
+{id:"qui-2",name:"Supino declinado",sets:3,reps:"8-12",rest:90,icon:"activity"},
+{id:"qui-3",name:"Elevação frontal",sets:3,reps:"10-12",rest:60,icon:"dumbbell"},
+{id:"qui-4",name:"Elevação lateral cabo",sets:3,reps:"12-15",rest:60,icon:"activity"},
+{id:"qui-5",name:"Tríceps francês",sets:3,reps:"10-12",rest:60,icon:"dumbbell"},
+{id:"qui-6",name:"Tríceps pulley",sets:3,reps:"10-15",rest:60,icon:"activity"}]},
+SEX:{title:"PULL B (COSTAS, BÍCEPS)",exercises:[
+{id:"sex-1",name:"Barra fixa",sets:3,reps:"Falha",rest:120,icon:"person"},
+{id:"sex-2",name:"Remada unilateral",sets:3,reps:"8-12",rest:90,icon:"dumbbell"},
+{id:"sex-3",name:"Crucifixo invertido",sets:3,reps:"12-15",rest:60,icon:"activity"},
+{id:"sex-4",name:"Rosca alternada",sets:3,reps:"10-12",rest:60,icon:"dumbbell"},
+{id:"sex-5",name:"Rosca Scott",sets:3,reps:"10-12",rest:60,icon:"activity"}]}
+};
+const iconSvg={
+dumbbell:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9v6M3.5 10v4M18 9v6m2.5-5v4M6 12h12M3.5 12H2m20 0h-1.5"/></svg>',
+activity:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>',
+person:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M12 7v6m0-4-5 3m5-3 5 3m-5 1-4 8m4-8 4 8"/></svg>'
+};
+const KEY="meuTreinoPremiumGeminiStyle";
+let selectedDay="SEG", interval=null, activeTimerId=null, deadlines={};
+let state={completed:[],notes:{}};
+try{const saved=JSON.parse(localStorage.getItem(KEY)||"null");if(saved&&typeof saved==="object")state={completed:Array.isArray(saved.completed)?saved.completed:[],notes:saved.notes&&typeof saved.notes==="object"?saved.notes:{}};}catch(e){}
+const $=id=>document.getElementById(id);
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function remaining(id){return deadlines[id]?Math.max(0,Math.ceil((deadlines[id]-Date.now())/1000)):0;}
+function fmt(s){return Math.floor(s/60)+":"+(s%60<10?"0":"")+(s%60);}
+function stopTimer(id){if(!id||activeTimerId===id){if(interval!==null)clearInterval(interval);interval=null;activeTimerId=null;}if(id)delete deadlines[id];}
+function startTimer(id,seconds){
+  if(interval!==null)clearInterval(interval);
+  interval=null;activeTimerId=id;deadlines[id]=Date.now()+seconds*1000;
+  const btn=document.querySelector('[data-rest-id="'+id+'"]');
+  if(btn){btn.classList.add("running");btn.setAttribute("aria-label","Descanso em andamento");btn.innerHTML=iconSvg.activity+'<span>'+fmt(seconds)+'</span>';}
+  interval=setInterval(()=>{
+    const left=remaining(id);
+    const b=document.querySelector('[data-rest-id="'+id+'"]');
+    if(b){b.classList.toggle("running",left>0);b.innerHTML=left>0?iconSvg.activity+'<span>'+fmt(left)+'</span>':'<span>Descanso</span>';}
+    if(left<=0){clearInterval(interval);interval=null;activeTimerId=null;delete deadlines[id];try{if(navigator.vibrate)navigator.vibrate([150,80,150]);}catch(e){}}
+  },200);
+}
+function drawDays(){
+  $("days").innerHTML=days.map(d=>'<button type="button" class="day '+(d===selectedDay?'active':'')+'" data-day="'+d+'" aria-pressed="'+(d===selectedDay)+'">'+d+'</button>').join("");
+}
+function drawExercises(){
+  const data=workouts[selectedDay];
+  $("day-title").textContent=selectedDay+" — "+data.title;
+  $("exercise-list").innerHTML=data.exercises.map(ex=>{
+    const checked=state.completed.includes(ex.id);
+    const note=state.notes[ex.id]||"";
+    return '<article class="exercise '+(checked?'completed':'')+'" data-exercise="'+ex.id+'">'+
+      '<div class="exercise-top">'+
+      '<div class="exercise-icon">'+(iconSvg[ex.icon]||iconSvg.activity)+'</div>'+
+      '<input class="check" type="checkbox" aria-label="Marcar '+ex.name+' como concluído" data-check="'+ex.id+'" '+(checked?'checked':'')+'>'+
+      '<div class="exercise-info"><p class="exercise-name">'+ex.name+'</p><div class="meta">'+ex.sets+' séries · '+ex.reps+' repetições · descanso '+ex.rest+' s</div></div>'+
+      '<button type="button" class="rest" data-rest-id="'+ex.id+'" data-rest-seconds="'+ex.rest+'">Descanso</button>'+
+      '</div><input class="note" type="text" data-note="'+ex.id+'" value="'+escapeAttr(note)+'" placeholder="Carga / notas (ex.: 20 kg)" aria-label="Carga e notas para '+ex.name+'">'+
+      '</article>';
+  }).join("");
+  updateProgress();
+}
+function escapeAttr(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function updateProgress(){
+ const ex=workouts[selectedDay].exercises;
+ const done=ex.filter(x=>state.completed.includes(x.id)).length;
+ $("progress-text").textContent=done+" de "+ex.length+" exercícios";
+ $("progress-fill").style.width=(done/Math.max(1,ex.length)*100)+"%";
+}
+$("days").addEventListener("click",e=>{
+ const b=e.target.closest("[data-day]");if(!b)return;
+ selectedDay=b.dataset.day;drawDays();drawExercises();
+});
+$("exercise-list").addEventListener("click",e=>{
+ const b=e.target.closest("[data-rest-id]");if(!b)return;
+ const id=b.dataset.restId, seconds=Number(b.dataset.restSeconds)||90;
+ if(activeTimerId===id){if(interval!==null)clearInterval(interval);interval=null;activeTimerId=null;delete deadlines[id];b.classList.remove("running");b.textContent="Descanso";return;}
+ startTimer(id,seconds);
+});
+$("exercise-list").addEventListener("change",e=>{
+ const box=e.target.closest("[data-check]");if(!box)return;
+ const id=box.dataset.check;
+ state.completed=box.checked?[...new Set([...state.completed,id])]:state.completed.filter(x=>x!==id);
+ persist();const article=box.closest(".exercise");article.classList.toggle("completed",box.checked);updateProgress();
+});
+$("exercise-list").addEventListener("input",e=>{
+ const field=e.target.closest("[data-note]");if(!field)return;
+ state.notes[field.dataset.note]=field.value;persist();
+});
+drawDays();drawExercises();
+})();
+</script>
+</body>
+</html>

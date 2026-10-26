@@ -49,8 +49,6 @@ $("list").addEventListener("change",e=>{let c=e.target.closest("[data-check]");i
 $("list").addEventListener("input",e=>{let i=e.target.closest("[data-load]");if(!i)return;let k=day+"-"+i.dataset.load;data[k]={...(data[k]||{}),load:i.value};save()});
 $("list").addEventListener("click",e=>{let b=e.target.closest("[data-rest]");if(b)rest(Number(b.dataset.rest)||60)});
 $("stop").addEventListener("click",stop);
-$("maximize").addEventListener("click",async()=>{try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen){await document.documentElement.requestFullscreen();$("maximize").textContent="⛶";return}if(document.fullscreenElement&&document.exitFullscreen){await document.exitFullscreen();return}}catch(e){}document.body.classList.toggle("immersive");const on=document.body.classList.contains("immersive");$("maximize").textContent=on?"⤢":"⛶";$("maximize").setAttribute("aria-label",on?"Restaurar tamanho da tela":"Maximizar tela")});
-document.addEventListener("fullscreenchange",()=>{const on=!!document.fullscreenElement;$("maximize").textContent=on?"⤢":"⛶";$("maximize").setAttribute("aria-label",on?"Restaurar tamanho da tela":"Maximizar tela")});
 $("clear").addEventListener("click",()=>{if(!confirm("Limpar as marcações e cargas deste dia?"))return;plan[day].list.forEach(([id])=>delete data[day+"-"+id]);save();render()});
 renderDays();render();
 })();

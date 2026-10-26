@@ -57,6 +57,81 @@ h1{font-size:19px;margin:0 0 6px;font-weight:900;letter-spacing:.3px;color:#fff}
 @media(min-width:620px){.detailhero{aspect-ratio:1.45}.detail-intro{grid-template-columns:1.4fr 1fr}}
 @media(max-width:420px){.detailintro{grid-template-columns:minmax(0,1fr) 118px;gap:7px}.detail-guide,.detail-muscles,.detail-equipment,.detail-tips{padding:10px}.detail-guide li,.detail-tips-list div{font-size:11px}.detailtop strong{font-size:18px}.detailhero{aspect-ratio:.92}}
 
+
+/* Redesign global do app conforme as duas referências fornecidas */
+body{background:#050506;background-image:radial-gradient(ellipse at 50% 0%,#211a0d 0,transparent 48%);color:#f7f7f7}
+.app{max-width:760px;padding-bottom:100px}
+header{background:#080809f5;border-bottom:1px solid #4b3b1d;box-shadow:0 8px 24px #0008}
+.brand{justify-content:center;padding:16px 16px 13px;gap:12px}
+.crown{width:44px;height:44px;border-radius:13px;font-size:26px}
+.brandname{font-size:18px;letter-spacing:1.8px}
+.tagline{font-size:9px;letter-spacing:2px;text-transform:uppercase}
+.timerlabel,.timerrow{display:none!important}
+.progress{padding:0 18px 14px}
+.progressline{font-size:10px;letter-spacing:1px}
+.track{height:5px;background:#211c13}.fill{background:linear-gradient(90deg,#b78324,#ffe18b)}
+main{padding:14px 14px}
+#view-home>.profilehero,#view-home>.welcome,#view-home>.statrow,#view-home>.graphcard,#view-home>.nextcard{display:none!important}
+#view-home>.sectionhead{margin:8px 2px 12px}
+#view-home>.sectionhead h2{font-size:12px;color:#f5d37a;letter-spacing:1.2px}
+.dayheading{margin:0 2px 10px;color:#a8a29a}
+.days{gap:7px;margin-bottom:20px}
+.day{min-height:54px;border:1px solid #3b3427;border-radius:13px;background:linear-gradient(145deg,#19191b,#0c0c0d);color:#c9c9c9;font-size:12px;box-shadow:inset 0 1px #ffffff08}
+.day.active{background:linear-gradient(145deg,#ffe18b,#c28a29);border-color:#ffe18b;color:#171109;box-shadow:0 0 18px #e8b84c2b}
+#title{font-size:18px;line-height:1.3;margin:0 2px 5px;color:#fff}
+.subtitle{margin:0 2px 14px;font-size:11px;color:#aaa}
+.list{gap:11px}
+.exercise{position:relative;display:grid;grid-template-columns:minmax(120px,40%) minmax(0,1fr);gap:13px;align-items:stretch;padding:9px;border:1px solid #4a391d;border-radius:15px;background:linear-gradient(110deg,#171512,#09090a);box-shadow:0 5px 18px #0005;min-height:122px}
+.exercise.done{border-color:#d7a63d;background:linear-gradient(110deg,#211a0b,#0c0c0d)}
+.exercise .thumb{width:100%;height:100%;min-height:106px;aspect-ratio:1.25;border-radius:10px;border:1px solid #4a391d;background-color:#111;background-size:500% 300%;background-repeat:no-repeat;box-shadow:none}
+.exercise .thumb:after{display:none}
+.exercise>div:nth-child(2){display:flex;flex-direction:column;justify-content:center;min-width:0;padding:4px 4px 4px 0}
+.exercise .top{gap:7px;margin-bottom:8px;align-items:flex-start}
+.exercise .check{accent-color:#e8b84c;width:16px;height:16px;margin-top:2px}
+.exercise .name{font-size:14px;line-height:1.25;font-weight:850}
+.exercise .meta{font-size:11px;color:#d5b66a;margin-top:5px}
+.exercise .load{font-size:12px;padding:9px 10px;border-color:#3d3423;background:#080809}
+.exercise .top:after{content:"›";position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:28px;color:#f5d37a}
+.bottomnav{width:min(760px,100%);background:#080809f7;border-top:1px solid #4b3b1d;padding:8px 6px max(12px,env(safe-area-inset-bottom))}
+.navitem{font-size:10px;color:#8b877e;gap:4px}
+.navicon{color:inherit;font-size:21px}.navitem.active{color:#f5d37a}
+.footer{padding:18px 10px}
+.detailpanel{width:100%;max-width:760px;padding:calc(12px + env(safe-area-inset-top)) 14px calc(22px + env(safe-area-inset-bottom));background:#050506}
+.detailtop{position:relative;gap:10px;margin-bottom:12px}
+.detailtop strong{font-size:21px}
+.detailtop .smallmuted{color:#f5d37a}
+.backbtn{color:#f5d37a;font-size:32px}
+.detailhero{aspect-ratio:1.18;background-size:500% 300%;border-color:#6c5121;box-shadow:0 0 0 1px #e8b84c15,0 10px 28px #0008}
+.detailintro{grid-template-columns:minmax(0,1.35fr) minmax(120px,.8fr)}
+.detail-guide,.detail-muscles,.detail-equipment,.detail-tips{border-color:#4a391d;background:linear-gradient(145deg,#151311,#080809);box-shadow:0 4px 15px #0004}
+.detail-guide li{grid-template-columns:24px minmax(0,1fr)}
+.detailbox{border-color:#4a391d;background:linear-gradient(145deg,#171512,#090909)}
+.setdot{border-color:#4a391d;background:#0b0b0c}.setdot.active{background:#261d0b;border-color:#f5d37a;color:#f5d37a}
+.restcircle{border-color:#5b451e;background:radial-gradient(ellipse at center,#211807,#09090a)}
+.secondarybtn{border-color:#5a4620;background:#11100d}
+.startbtn{background:linear-gradient(110deg,#b78324,#ffe18b,#c28a29);color:#161109;box-shadow:0 4px 18px #d49c2925}
+@media(min-width:600px){
+ .days{gap:10px}.day{font-size:13px;min-height:60px}
+ .exercise{grid-template-columns:200px minmax(0,1fr);min-height:150px;padding:11px}
+ .exercise .thumb{min-height:126px;aspect-ratio:1.5}
+ .exercise .name{font-size:16px}.exercise .meta{font-size:12px}
+ .detailhero{aspect-ratio:1.4}
+}
+@media(max-width:420px){
+ main{padding:12px 10px}
+ .brandname{font-size:16px}
+ .exercise{grid-template-columns:40% minmax(0,1fr);gap:9px;padding:7px;min-height:104px}
+ .exercise .thumb{min-height:90px;aspect-ratio:1.02}
+ .exercise .name{font-size:12px}
+ .exercise .meta{font-size:10px}
+ .exercise .load{font-size:11px;padding:8px}
+ .exercise .top:after{right:8px;font-size:23px}
+ .detailintro{grid-template-columns:minmax(0,1fr) 112px;gap:7px}
+ .detail-guide,.detail-muscles,.detail-equipment,.detail-tips{padding:9px}
+ .detailhero{aspect-ratio:.92}
+ .muscle-visual{height:46px}
+}
+
 </style>
 </head>
 <body><div class="app">

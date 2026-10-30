@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import logoImg from '../assets/logo.png';
+import logoImg from '../assets/logo.webp';
 import { Building2, Mail, ArrowRight, AlertCircle, KeyRound, Globe, Lock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslation } from '../utils/i18n';
@@ -61,13 +61,13 @@ export const AccessPortalLoginView: React.FC<AccessPortalLoginViewProps> = ({ on
         <div className="text-center space-y-3">
           <div className="flex justify-center mb-1">
             <img
-              src={logoImg || '/logo.png'}
+              src={logoImg || '/logo.webp'}
               alt="Logo"
               className="w-24 h-24 object-contain mx-auto drop-shadow-lg p-1"
               onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
                 target.onerror = null;
-                target.src = '/logo.png';
+                target.src = '/logo.webp';
               }}
             />
           </div>

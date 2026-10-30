@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import logoImg from '../assets/logo.png';
+import logoImg from '../assets/logo.webp';
 import { Mail, ArrowRight, AlertCircle, KeyRound, Globe, Lock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslation } from '../utils/i18n';
@@ -80,13 +80,13 @@ export const LoginView: React.FC = () => {
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-1">
             <img
-              src={logoImg || '/logo.png'}
+              src={logoImg || '/logo.webp'}
               alt="W & J Cleaners Logo"
               className="w-28 h-28 object-contain mx-auto drop-shadow-lg p-1"
               onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
                 target.onerror = null;
-                target.src = '/logo.png';
+                target.src = '/logo.webp';
               }}
             />
           </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Building2 } from 'lucide-react';
 import { Company } from '../types';
-import logoImg from '../assets/logo.png';
+import logoImg from '../assets/logo.webp';
 
 interface CompanyLogoProps {
   company: Partial<Company> & { name: string };
@@ -26,7 +26,7 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
   // Check if company is W&J Cleaners or another company with a logo
   const isWJ = !company.id || company.id === 'comp_wj_london' || company.name?.toLowerCase().includes('w & j');
   const customUrl = company.logoUrl?.trim();
-  const effectiveLogoUrl = customUrl || (isWJ ? logoImg || '/logo.png' : '');
+  const effectiveLogoUrl = customUrl || (isWJ ? logoImg || '/logo.webp' : '');
 
   const hasCustomLogo = Boolean(effectiveLogoUrl);
 

@@ -132,6 +132,26 @@ main{padding:14px 14px}
  .muscle-visual{height:46px}
 }
 
+
+/* Biblioteca de cinesiologia integrada */
+.bottomnav{grid-template-columns:repeat(6,minmax(0,1fr))}
+.navitem{font-size:9px}
+.anatomy-hero{border:1px solid #5a4620;border-radius:18px;padding:17px;background:radial-gradient(ellipse at 100% 0%,#e8b84c24,transparent 52%),linear-gradient(135deg,#20190d,#0b0b0c);margin-bottom:15px}
+.anatomy-hero h2{font-size:20px;margin:8px 0}.anatomy-hero p{font-size:12px;color:#c5bda9;line-height:1.55;margin:0}
+.anatomy-search{width:100%;padding:13px 14px;border:1px solid #59451f;border-radius:12px;background:#0b0b0c;color:#fff;margin:0 0 12px}
+.anatomy-filters{display:flex;gap:7px;overflow:auto;padding:2px 0 12px;scrollbar-width:none}
+.anatomy-filter{flex:0 0 auto;border:1px solid #49391e;background:#151413;color:#c9c2b3;border-radius:99px;padding:9px 12px;font-size:11px;font-weight:800}
+.anatomy-filter.active{background:linear-gradient(120deg,#f5d37a,#b78324);color:#171109;border-color:#f5d37a}
+.anatomy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.anatomy-card{border:1px solid #4a391d;border-radius:14px;background:linear-gradient(145deg,#191714,#0b0b0c);padding:12px;text-align:left;color:#fff;min-width:0}
+.anatomy-card:active{transform:scale(.985)}
+.anatomy-card strong{display:block;font-size:12px;line-height:1.35;margin:8px 0 5px}
+.anatomy-card small{display:block;color:#d7b65e;font-size:10px;line-height:1.45}
+.anatomy-icon{height:70px;border-radius:9px;border:1px solid #46371e;background:#101011;display:grid;place-items:center;color:#f5d37a;font-size:29px}
+.anatomy-count{display:flex;justify-content:space-between;gap:8px;color:#aaa;font-size:11px;margin:5px 1px 12px}
+.anatomy-empty{padding:22px;text-align:center;border:1px dashed #59451f;border-radius:14px;color:#aaa;font-size:12px;grid-column:1/-1}
+@media(max-width:370px){.navitem{font-size:8px}.navicon{font-size:18px}.anatomy-grid{gap:7px}.anatomy-card{padding:9px}}
+
 </style>
 </head>
 <body><div class="app">
@@ -149,6 +169,14 @@ main{padding:14px 14px}
 <div class="graphcard"><div class="graphhead"><strong>Evolução de carga</strong><select id="historyExercise"><option>Supino reto</option><option>Supino inclinado</option><option>Agachamento</option></select></div><svg class="chartsvg" viewBox="0 0 320 145" role="img" aria-label="Gráfico de evolução de carga"><g stroke="#302d27"><path d="M28 15H309 M28 43H309 M28 71H309 M28 99H309 M28 127H309"/><path d="M28 15V127 M98 15V127 M168 15V127 M238 15V127 M309 15V127"/></g><path d="M28 107 L98 96 L168 75 L238 58 L309 35 L309 127 L28 127Z" fill="#e8b84c" opacity=".12"/><path d="M28 107 L98 96 L168 75 L238 58 L309 35" fill="none" stroke="#f5d37a" stroke-width="2.5"/><g fill="#f5d37a"><circle cx="28" cy="107" r="4"/><circle cx="98" cy="96" r="4"/><circle cx="168" cy="75" r="4"/><circle cx="238" cy="58" r="4"/><circle cx="309" cy="35" r="4"/></g><g fill="#aaa" font-size="10"><text x="23" y="141">Jul</text><text x="91" y="141">Ago</text><text x="161" y="141">Set</text><text x="231" y="141">Out</text></g></svg></div><div class="chartbox"><div class="eyebrow">Sua consistência</div><h2 id="historyTotal" style="font-size:22px;margin:8px 0">0 exercícios concluídos</h2><p class="smallmuted">Marcações e cargas que você registrou neste aparelho.</p></div><div class="sectionhead"><h2>Exercícios registrados</h2></div><div id="historyList"></div></section>
 <section id="view-goals" class="view"><div class="sectionhead"><h2>Metas</h2><span class="pill">SUA EVOLUÇÃO</span></div><div class="chartbox"><div class="eyebrow">Objetivo principal</div><h2 style="font-size:18px;margin:10px 0">♧　Hipertrofia e definição　›</h2><p class="smallmuted">Acompanhe os objetivos que você definiu para sua evolução.</p></div><div class="chartbox"><div class="eyebrow">Hipertrofia e definição</div><h2 style="font-size:20px;margin:8px 0">Defina seu próximo marco.</h2><p class="smallmuted">Preencha seu peso atual e sua meta. Os dados ficam salvos neste aparelho.</p><label class="smallmuted" for="currentWeight">Peso atual (kg)</label><input id="currentWeight" class="field" type="number" min="1" max="400" step="0.1" placeholder="Ex.: 74"><label class="smallmuted" for="goalWeightInput">Peso desejado (kg)</label><input id="goalWeightInput" class="field" type="number" min="1" max="400" step="0.1" placeholder="Ex.: 80"><button id="saveGoals" class="primary">SALVAR MINHAS METAS</button><p id="goalFeedback" class="smallmuted"></p></div><div class="sectionhead"><h2>Consistência semanal</h2></div><div class="chartbox"><div class="statlabel">DIAS COMPLETOS</div><div class="statvalue" id="goalWeekDone">0 de 5</div><div class="chartbar"><span id="goalBar" style="width:0%"></span></div></div></section>
 <section id="view-profile" class="view"><div class="sectionhead"><h2>Perfil do atleta</h2><span class="pill">PREMIUM</span></div><div class="chartbox"><label class="smallmuted" for="athleteName">Seu nome</label><input id="athleteName" class="field" placeholder="Como quer ser chamado?"><button id="saveName" class="primary">SALVAR PERFIL</button><p id="nameFeedback" class="smallmuted"></p></div><div class="chartbox"><div class="crown" style="width:52px;height:52px;font-size:30px;margin-bottom:15px">♛</div><div class="eyebrow">TREINO PREMIUM</div><h2 style="font-size:22px;margin:8px 0">Seu espaço de evolução.</h2><p class="smallmuted">Cargas, marcações e metas são salvas no armazenamento local do navegador. Para sincronizar entre aparelhos, será necessária uma integração de nuvem.</p><button id="exportData" class="primary" style="margin-top:12px">EXPORTAR MEUS DADOS</button><p id="exportFeedback" class="smallmuted"></p></div></section>
+<section id="view-anatomy" class="view">
+<div class="sectionhead"><h2>Biblioteca de cinesiologia</h2><span class="pill">150 MAPAS · REFERÊNCIA</span></div>
+<div class="anatomy-hero"><div class="eyebrow">Anatomia aplicada ao treino</div><h2>Entenda cada movimento.</h2><p>Consulte os exercícios do seu plano, veja os músculos envolvidos, a execução, os equipamentos e os principais cuidados técnicos. Base de referência: seu material de 150 mapas mentais de cinesiologia.</p></div>
+<input id="anatomySearch" class="anatomy-search" type="search" placeholder="Buscar exercício ou músculo..." aria-label="Buscar exercício ou músculo">
+<div id="anatomyFilters" class="anatomy-filters" aria-label="Filtrar por grupo muscular"></div>
+<div class="anatomy-count"><span id="anatomyResultCount">25 exercícios</span><span>Toque para abrir os detalhes</span></div>
+<div id="anatomyGrid" class="anatomy-grid"></div>
+</section>
 </main>
 <section id="exerciseDetail" class="detailpanel" aria-label="Detalhes do exercício" aria-modal="true" role="dialog">
 <div class="detailtop"><button id="closeDetail" class="backbtn" aria-label="Voltar">‹</button><div><strong id="detailName">Supino reto</strong><div class="smallmuted" id="detailSetLabel">Série 1 de 3</div></div><span style="color:var(--gold)">♧</span></div>
@@ -165,7 +193,7 @@ main{padding:14px 14px}
 <div class="setrow" id="setDots"><button class="setdot active" data-set="1">1</button><button class="setdot" data-set="2">2</button><button class="setdot" data-set="3">3</button></div>
 <div class="restcircle"><span class="smallmuted">DESCANSO</span><strong id="detailTimer">01:30</strong><button id="detailRest" class="secondarybtn">▶ INICIAR DESCANSO</button></div>
 <div class="detailactions"><button id="saveSet" class="startbtn"><span>✓</span> SALVAR SÉRIE</button><button id="nextExercise" class="secondarybtn">PRÓXIMO →</button></div></section>
-<nav class="bottomnav" aria-label="Navegação principal"><button class="navitem active" data-view="home"><span class="navicon">⌂</span>Início</button><button class="navitem" data-view="training"><span class="navicon">♜</span>Treino</button><button class="navitem" data-view="history"><span class="navicon">▤</span>Histórico</button><button class="navitem" data-view="goals"><span class="navicon">◎</span>Metas</button><button class="navitem" data-view="profile"><span class="navicon">♙</span>Perfil</button></nav>
+<nav class="bottomnav" aria-label="Navegação principal"><button class="navitem active" data-view="home"><span class="navicon">⌂</span>Início</button><button class="navitem" data-view="training"><span class="navicon">♜</span>Treino</button><button class="navitem" data-view="history"><span class="navicon">▤</span>Histórico</button><button class="navitem" data-view="goals"><span class="navicon">◎</span>Metas</button><button class="navitem" data-view="profile"><span class="navicon">♙</span>Perfil</button><button class="navitem" data-view="anatomy"><span class="navicon">✥</span>Anatomia</button></nav>
 </div>
 <script>
 (()=>{"use strict";
@@ -249,6 +277,47 @@ let athleteName="";try{athleteName=localStorage.getItem(nameKey)||""}catch(e){}$
 $("currentWeight").value=goals.current||"";$("goalWeightInput").value=goals.target||"80";
 $("saveGoals").addEventListener("click",()=>{const current=$("currentWeight").value,target=$("goalWeightInput").value;if((current&&(+current<=0||+current>400))||!target||+target<=0||+target>400){$("goalFeedback").textContent="Informe pesos válidos para salvar.";return}goals={current,target};try{localStorage.setItem("treinoPremiumGoals",JSON.stringify(goals))}catch(e){}$("goalFeedback").textContent="Metas salvas neste aparelho.";updateDashboard()});
 $("exportData").addEventListener("click",()=>{const blob=new Blob([JSON.stringify({workoutData:data,goals},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="treino-premium-backup.json";a.click();URL.revokeObjectURL(url);$("exportFeedback").textContent="Backup exportado. Guarde o arquivo para ter uma cópia dos seus dados."});
+
+// Biblioteca de cinesiologia: catálogo dos exercícios já presentes no plano semanal.
+const anatomyGroups=[
+ {id:"all",label:"Todos",keys:[]},
+ {id:"chest",label:"Peitoral",keys:["chest","upperChest"]},
+ {id:"back",label:"Costas",keys:["back","upperBack"]},
+ {id:"shoulder",label:"Ombros",keys:["shoulder","sideShoulder","frontShoulder","rearShoulder"]},
+ {id:"biceps",label:"Bíceps",keys:["biceps"]},
+ {id:"triceps",label:"Tríceps",keys:["triceps"]},
+ {id:"quads",label:"Quadríceps",keys:["quads"]},
+ {id:"hamstrings",label:"Posterior",keys:["hamstrings"]},
+ {id:"calves",label:"Panturrilha",keys:["calves"]},
+ {id:"glutes",label:"Glúteos",keys:["glutes"]}
+];
+let anatomyFilter="all";
+function anatomyEntries(){
+ return Object.keys(plan).flatMap(d=>plan[d].list.map(([id,name,sets,restSecs])=>({day:d,id,name,sets,restSecs,info:exerciseInfo[id]||{},keys:muscleMap[id]||[]})));
+}
+function renderAnatomyFilters(){
+ $("anatomyFilters").innerHTML=anatomyGroups.map(g=>'<button class="anatomy-filter '+(anatomyFilter===g.id?'active':'')+'" data-anatomy-filter="'+g.id+'">'+g.label+'</button>').join("");
+}
+function renderAnatomy(){
+ const q=($("anatomySearch").value||"").trim().toLocaleLowerCase("pt-BR");
+ const entries=anatomyEntries().filter(x=>{
+  const group=anatomyGroups.find(g=>g.id===anatomyFilter)||anatomyGroups[0];
+  const groupMatch=anatomyFilter==="all"||x.keys.some(k=>group.keys.includes(k));
+  const searchable=[x.name,...(x.info.muscles||[]),...(x.info.equipment||[])].join(" ").toLocaleLowerCase("pt-BR");
+  return groupMatch&&(!q||searchable.includes(q));
+ });
+ $("anatomyResultCount").textContent=entries.length+" exercícios encontrados";
+ $("anatomyGrid").innerHTML=entries.map(x=>{
+  const muscle=(x.info.muscles||[]).slice(0,3).join(" · ")||"Consulte os detalhes";
+  const symbol=x.keys.some(k=>["chest","upperChest"].includes(k))?"◈":x.keys.some(k=>["back","upperBack"].includes(k))?"▤":x.keys.some(k=>k.toLowerCase().includes("shoulder"))?"✥":x.keys.includes("quads")?"⌁":x.keys.includes("biceps")?"↗":"✦";
+  return '<button class="anatomy-card" data-anatomy-exercise="'+x.id+'" data-anatomy-day="'+x.day+'"><span class="anatomy-icon">'+symbol+'</span><strong>'+esc(x.name)+'</strong><small>'+esc(muscle)+'</small><small style="color:#888;margin-top:7px">'+x.day+' · '+esc(x.sets)+'</small></button>';
+ }).join("")||'<div class="anatomy-empty">Nenhum exercício encontrado neste filtro. Tente outro músculo ou termo.</div>';
+}
+$("anatomySearch").addEventListener("input",renderAnatomy);
+$("anatomyFilters").addEventListener("click",e=>{const b=e.target.closest("[data-anatomy-filter]");if(!b)return;anatomyFilter=b.dataset.anatomyFilter;renderAnatomyFilters();renderAnatomy()});
+$("anatomyGrid").addEventListener("click",e=>{const b=e.target.closest("[data-anatomy-exercise]");if(!b)return;day=b.dataset.anatomyDay;renderDays();render();openDetail(b.dataset.anatomyExercise)});
+renderAnatomyFilters();renderAnatomy();
+
 renderDays();render();updateDashboard();try{if(athleteName)document.querySelector(".profilecopy strong").textContent="Olá, "+athleteName+"!"}catch(e){}
 })();
 </script></body></html>

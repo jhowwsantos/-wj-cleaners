@@ -1,8 +1,28 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isJhonatan() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && (
+          request.auth.token.email.lower() == 'jhonatandossantos25@gmail.com'
+          || request.auth.token.email.lower() == 'jhonatan@wjcleaners.co.uk'
+        );
+    }
+
+    function isWaylla() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && (
+          request.auth.token.email.lower() == 'wayllasilva031@gmail.com'
+          || request.auth.token.email.lower() == 'waylla@wjcleaners.co.uk'
+        );
+    }
+
     match /{document=**} {
-      allow read, write: if true;
+      allow read: if true;
+      // Preserve existing access for other accounts, but make Waylla read-only.
+      allow write: if isJhonatan() || !isWaylla();
     }
   }
 }

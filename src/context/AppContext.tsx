@@ -403,6 +403,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return Boolean(isSuperOwner);
   }, [currentUser]);
 
+  const isWayllaReadOnly = Boolean(
+    currentUser?.id === 'usr_waylla' ||
+    currentUser?.email?.toLowerCase() === 'wayllasilva031@gmail.com' ||
+    currentUser?.email?.toLowerCase() === 'waylla@wjcleaners.co.uk'
+  );
+
+  const denyWayllaWrite = () => {
+    if (!isWayllaReadOnly) return false;
+    addNotification('Acesso somente leitura', 'Sua conta pode visualizar as informações, mas não pode criar, editar ou excluir registros.', 'WARNING');
+    return true;
+  };
+
   const userRole: UserRole = useMemo(() => {
     if (isSuperAdmin) {
       return 'OWNER' as UserRole;
@@ -758,6 +770,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const addRecurrenceSeries = (seriesData: Omit<RecurrenceSeries, 'id' | 'companyId' | 'createdAt'>): string => {
+    if (denyWayllaWrite()) return ''; 
     const seriesId = `rec_${seriesData.clientId}_${Date.now()}`;
     const newSeries: RecurrenceSeries = {
       ...seriesData,
@@ -773,6 +786,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const cancelRecurrenceSeries = (seriesId: string, cutoffDate?: string) => {
+    if (denyWayllaWrite()) return; 
     const targetDate = cutoffDate || new Date().toISOString().split('T')[0];
     setRecurrenceSeries((prev) =>
       prev.map((s) => (s.id === seriesId ? { ...s, status: 'CANCELLED', cancelledAtDate: targetDate, updatedAt: new Date().toISOString() } : s))
@@ -787,6 +801,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateRecurrenceSeries = (seriesId: string, updates: Partial<RecurrenceSeries>) => {
+    if (denyWayllaWrite()) return; 
     setRecurrenceSeries((prev) =>
       prev.map((s) => (s.id === seriesId ? { ...s, ...updates, updatedAt: new Date().toISOString() } : s))
     );
@@ -1061,7 +1076,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addNotification('Sessão Encerrada', 'Você saiu da sua conta.', 'INFO');
   };
 
-  const registerNewStaff = async (data: Omit<User, 'id'> & { password?: string }) => {
+  const registerNewStaff = async (data: Omit<User, 'id'> & {
+    if (denyWayllaWrite()) return;  password?: string }) => {
     const cleanEmail = data.email.trim().toLowerCase();
 
     if (data.password) {
@@ -1106,6 +1122,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Actions
   const setCurrentCompanyId = (id: string) => {
+    if (denyWayllaWrite()) return; 
     if (!isSuperAdmin && currentUser?.companyId && id !== currentUser.companyId) {
       addNotification('Acesso Negado', 'Apenas o Super Admin possui permissão para alternar entre filiais.', 'WARNING');
       return;
@@ -1116,6 +1133,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const setCurrentUserId = (id: string) => {
+    if (denyWayllaWrite()) return; 
     setCurrentUserIdState(id);
     localStorage.setItem(`${LOCAL_STORAGE_KEY}_current_user`, id);
     const u = users.find((x) => x.id === id);
@@ -1129,6 +1147,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addCompany = (comp: Omit<Company, 'id'>) => {
+    if (denyWayllaWrite()) return; 
     if (!isSuperAdmin) {
       addNotification('Acesso Negado', 'Apenas o Super Admin pode registrar novas empresas no SaaS.', 'WARNING');
       return;
@@ -1146,6 +1165,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateCompany = (id: string, updates: Partial<Company>) => {
+    if (denyWayllaWrite()) return; 
     if (!isSuperAdmin && currentUser?.companyId && id !== currentUser.companyId) {
       addNotification('Acesso Negado', 'Você só pode alterar as configurações da sua própria empresa.', 'WARNING');
       return;
@@ -1158,6 +1178,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addUser = (user: Omit<User, 'id'>) => {
+    if (denyWayllaWrite()) return; 
     const newUser: User = { companyId: currentCompanyId, ...user, id: `usr_${Date.now()}` };
     setUsers((prev) => [...prev, newUser]);
     setDoc(doc(db, 'users', newUser.id), newUser).catch(() => {});
@@ -1165,6 +1186,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateUser = (id: string, updates: Partial<User>) => {
+    if (denyWayllaWrite()) return; 
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...updates } : u)));
     setDoc(doc(db, 'users', id), updates, { merge: true }).catch((err) => {
       console.warn('Error syncing user update to Firestore:', err);
@@ -1174,6 +1196,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteUser = (id: string) => {
+    if (denyWayllaWrite()) return; 
     const targetUser = users.find((u) => u.id === id);
     setUsers((prev) => prev.filter((u) => u.id !== id));
     deleteDoc(doc(db, 'users', id)).catch(() => {});
@@ -1181,6 +1204,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const reassignUserJobs = (fromCleanerId: string, toCleanerId: string, toCleanerName: string) => {
+    if (denyWayllaWrite()) return; 
     let count = 0;
     setJobs((prev) =>
       prev.map((j) => {
@@ -1207,6 +1231,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addClient = (c: Omit<Client, 'id' | 'companyId' | 'createdAt'>) => {
+    if (denyWayllaWrite()) return; 
     const newClient: Client = {
       ...c,
       active: c.active ?? true,
@@ -1221,6 +1246,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateClient = (id: string, updates: Partial<Client>) => {
+    if (denyWayllaWrite()) return; 
     setClients((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
     setDoc(doc(db, 'clients', id), sanitizeFirestoreData(updates), { merge: true }).catch((err) => {
       console.warn('Error syncing client update to Firestore:', err);
@@ -1260,6 +1286,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteClient = (id: string) => {
+    if (denyWayllaWrite()) return; 
     const targetClient = clients.find((c) => c.id === id);
 
     setClients((prev) => prev.filter((c) => c.id !== id));
@@ -1325,6 +1352,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addJob = (j: Omit<CleaningJob, 'id' | 'companyId'>) => {
+    if (denyWayllaWrite()) return; 
     deleteDoc(doc(db, 'jobs', 'global_schedule_clear')).catch(() => {});
     const randomSuffix = Math.random().toString(36).substring(2, 7);
     const newJob: CleaningJob = {
@@ -1340,6 +1368,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateJob = (id: string, updates: Partial<CleaningJob>) => {
+    if (denyWayllaWrite()) return; 
     let updatedTargetJob: CleaningJob | undefined;
     setJobs((prev) =>
       prev.map((j) => {
@@ -1356,6 +1385,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateJobStatus = (id: string, status: CleaningJob['status']) => {
+    if (denyWayllaWrite()) return; 
     let updatedJob: CleaningJob | null = null;
     setJobs((prev) =>
       prev.map((j) => {
@@ -1381,6 +1411,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const assignCleanerToJob = (jobId: string, cleanerId: string, cleanerName: string) => {
+    if (denyWayllaWrite()) return; 
     let updatedJob: CleaningJob | null = null;
     setJobs((prev) =>
       prev.map((j) => {
@@ -1407,6 +1438,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const checkInJob = (jobId: string, lat = 51.5074, lng = -0.1278) => {
+    if (denyWayllaWrite()) return; 
     const now = new Date();
     const timeStr = `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 8)}`;
     let updatedJob: CleaningJob | null = null;
@@ -1435,6 +1467,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const checkOutJob = (jobId: string, lat = 51.5074, lng = -0.1278) => {
+    if (denyWayllaWrite()) return; 
     const now = new Date();
     const timeStr = `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 8)}`;
     let updatedJob: CleaningJob | null = null;
@@ -1466,6 +1499,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addPhotoToJob = (jobId: string, photo: Omit<PhotoRecord, 'id'>) => {
+    if (denyWayllaWrite()) return; 
     const newPhoto: PhotoRecord = { ...photo, id: `photo_${Date.now()}` };
     let updatedJob: CleaningJob | null = null;
 
@@ -1488,6 +1522,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const saveSignatureToJob = (jobId: string, signatureBase64: string) => {
+    if (denyWayllaWrite()) return; 
     let updatedJob: CleaningJob | null = null;
 
     setJobs((prev) =>
@@ -1509,6 +1544,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteJob = (id: string, jobToDelete?: CleaningJob, scope: 'SINGLE' | 'THIS_AND_FUTURE' = 'SINGLE') => {
+    if (denyWayllaWrite()) return; 
     const target = jobToDelete || jobs.find((j) => j.id === id);
     if (!target) {
       deleteDoc(doc(db, 'jobs', id)).catch(() => {});
@@ -1581,6 +1617,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const clearAllScheduleJobs = () => {
+    if (denyWayllaWrite()) return; 
     const todayStr = new Date().toISOString().split('T')[0];
 
     // Cancel and purge all recurrence series from Firestore & state
@@ -1701,6 +1738,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const autoGenerateRecurringJobs = (clientId: string, weeksAhead = 8) => {
+    if (denyWayllaWrite()) return; 
     const c = clients.find((x) => x.id === clientId);
     if (c) {
       autoGenerateRecurringJobsInternal(c, weeksAhead);
@@ -1709,6 +1747,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addExpense = (exp: Omit<Expense, 'id' | 'companyId'>) => {
+    if (denyWayllaWrite()) return; 
     const newExpense: Expense = {
       ...exp,
       id: `exp_${Date.now()}`,
@@ -1721,6 +1760,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateExpense = (id: string, updates: Partial<Expense>) => {
+    if (denyWayllaWrite()) return; 
     setExpenses((prev) =>
       prev.map((e) => (e.id === id ? { ...e, ...updates } : e))
     );
@@ -1730,12 +1770,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteExpense = (id: string) => {
+    if (denyWayllaWrite()) return; 
     setExpenses((prev) => prev.filter((e) => e.id !== id));
     deleteDoc(doc(db, 'expenses', id)).catch(() => {});
     addNotification('Despesa Removida', `Despesa excluída.`, 'WARNING');
   };
 
   const addPayrollPayment = (paymentData: Omit<PayrollPayment, 'id' | 'companyId' | 'paidAt'>) => {
+    if (denyWayllaWrite()) return; 
     const newPayment: PayrollPayment = {
       ...paymentData,
       id: `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -1753,12 +1795,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deletePayrollPayment = (id: string) => {
+    if (denyWayllaWrite()) return; 
     setPayrollPayments((prev) => prev.filter((p) => p.id !== id));
     deleteDoc(doc(db, 'payrollPayments', id)).catch(() => {});
     addNotification('Pagamento Excluído', `Registro de pagamento removido com sucesso.`, 'WARNING');
   };
 
   const clearStaffPayrollPayments = (staffId: string) => {
+    if (denyWayllaWrite()) return; 
     setPayrollPayments((prev) => {
       const remaining = prev.filter((p) => p.staffId !== staffId);
       const toDelete = prev.filter((p) => p.staffId === staffId);

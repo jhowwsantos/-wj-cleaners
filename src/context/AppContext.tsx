@@ -952,6 +952,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Waylla is a standard staff account, never a Super Owner.
       if (isWaylla) {
         userObj.role = 'CLEANER';
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === userObj.id || u.email?.toLowerCase() === cleanEmail
+              ? { ...u, role: 'CLEANER' }
+              : u
+          )
+        );
         try {
           await setDoc(doc(db, 'users', userObj.id), { role: 'CLEANER' }, { merge: true });
         } catch (err) {

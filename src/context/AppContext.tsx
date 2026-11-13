@@ -1076,8 +1076,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addNotification('Sessão Encerrada', 'Você saiu da sua conta.', 'INFO');
   };
 
-  const registerNewStaff = async (data: Omit<User, 'id'> & {
-    if (denyWayllaWrite()) return;  password?: string }) => {
+  const registerNewStaff = async (data: Omit<User, 'id'> & { password?: string }) => {
+    if (denyWayllaWrite()) return;
     const cleanEmail = data.email.trim().toLowerCase();
 
     if (data.password) {

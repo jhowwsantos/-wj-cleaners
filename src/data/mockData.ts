@@ -61,7 +61,7 @@ export const INITIAL_USERS: User[] = [
     email: 'Wayllasilva031@gmail.com',
     phone: '+44 7700 900002',
     password: '123456',
-    role: 'OWNER',
+    role: 'CLEANER',
     avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=200',
     homePostcode: 'E1 6AN',
     homeAddress: '12 Commercial St, London E1 6AN',

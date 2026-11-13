@@ -378,9 +378,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!u) {
       u = users.find((x) => 
         x.email?.toLowerCase() === 'jhonatandossantos25@gmail.com' || 
-        x.email?.toLowerCase() === 'jhonatan@wjcleaners.co.uk' ||
-        x.email?.toLowerCase() === 'wayllasilva031@gmail.com' ||
-        x.email?.toLowerCase() === 'waylla@wjcleaners.co.uk'
+        x.email?.toLowerCase() === 'jhonatan@wjcleaners.co.uk'
       ) || users[0];
     }
     const isMasterOwner = u && (
@@ -689,7 +687,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (u.email?.toLowerCase() !== 'teste@wjcleaners.co.uk' && u.id !== 'usr_teste' && d.id !== 'usr_teste') {
               const isWayllaDoc = u.id === 'usr_waylla' || u.email?.toLowerCase() === 'wayllasilva031@gmail.com' || u.email?.toLowerCase() === 'waylla@wjcleaners.co.uk';
               const isJhonatanDoc = u.id === 'usr_jhonatan' || u.email?.toLowerCase() === 'jhonatandossantos25@gmail.com' || u.email?.toLowerCase() === 'jhonatan@wjcleaners.co.uk';
-              if ((isWayllaDoc || isJhonatanDoc) && u.role !== 'OWNER') {
+              if (isWayllaDoc && u.role !== 'CLEANER') {
+                u = { ...u, role: 'CLEANER' };
+                setDoc(doc(db, 'users', d.id), { role: 'CLEANER' }, { merge: true }).catch(() => {});
+              }
+              if (isJhonatanDoc && u.role !== 'OWNER') {
                 u = { ...u, role: 'OWNER' };
                 setDoc(doc(db, 'users', d.id), { role: 'OWNER' }, { merge: true }).catch(() => {});
               }
@@ -843,7 +845,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const isJhonatan = cleanEmail === 'jhonatandossantos25@gmail.com' || cleanEmail === 'jhonatan@wjcleaners.co.uk' || cleanEmail.includes('jhonatan');
     const isWaylla = cleanEmail === 'wayllasilva031@gmail.com' || cleanEmail === 'waylla@wjcleaners.co.uk' || cleanEmail.includes('waylla');
-    const isSuperOwnerAccount = isJhonatan || isWaylla;
+    const isSuperOwnerAccount = isJhonatan;
 
     // 1. Look for matching user profile in application state or INITIAL_USERS
     let matchedUser = users.find((u) => u.email?.toLowerCase() === cleanEmail) ||
@@ -946,6 +948,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         role: 'CLEANER' as UserRole,
         active: true,
       };
+
+      // Waylla is a standard staff account, never a Super Owner.
+      if (isWaylla) {
+        userObj.role = 'CLEANER';
+        try {
+          await setDoc(doc(db, 'users', userObj.id), { role: 'CLEANER' }, { merge: true });
+        } catch (err) {
+          console.warn('Waylla role sync warning:', err);
+        }
+      }
 
       try {
         const userDocRef = doc(db, 'users', userObj.id);
